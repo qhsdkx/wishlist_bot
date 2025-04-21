@@ -59,7 +59,8 @@ func setUpButtons() {
 
 	onlyRegisterSelector.Inline(
 		menu.Row(btnRegister),
-		menu.Row(btnPrev))
+		menu.Row(btnPrev),
+	)
 
 	//wishlistSelector.Inline(
 	//	wishlistSelector.Row(btnShowWishlist),

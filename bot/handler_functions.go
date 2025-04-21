@@ -12,154 +12,211 @@ import (
 var states = make(map[int64]string)
 
 func onButtonMyData(c telebot.Context, service sv.UserService) error {
-	user := service.FindById(c.Chat().ID)
-	var response strings.Builder
-	if user.Status == constants.REGISTERED {
-		response.WriteString("*Ваши данные:*\n\n")
-		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения:%s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
-		response.WriteString("Кнопками ниже вы можете обновить данные")
-		return c.Send(response.String(), wantEditSelector, telebot.ModeMarkdown)
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		user := service.FindById(c.Chat().ID)
+		var response strings.Builder
+		if user.Status == constants.REGISTERED {
+			response.WriteString("*Ваши данные:*\n\n")
+			response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения:%s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+			response.WriteString("Кнопками ниже вы можете обновить данные")
+			return c.Send(response.String(), wantEditSelector, telebot.ModeMarkdown)
+		}
+		response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом \n\n Имя: %s \n никнейм: %s", user.Name, user.Surname))
+		return c.Send(response.String(), menu, telebot.ModeMarkdown)
 	}
-	response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом \n\n Имя: %s \n никнейм: %s", user.Name, user.Surname))
-	return c.Send(response.String(), menu, telebot.ModeMarkdown)
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onEditName(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_NEW_NAME
-	return c.Send("Введите новое имя")
+func onEditName(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		states[c.Chat().ID] = constants.AWAITING_NEW_NAME
+		return c.Send("Введите новое имя")
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onEditSurname(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_NEW_SURNAME
-	return c.Send("Введите новую фамилию")
+func onEditSurname(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		states[c.Chat().ID] = constants.AWAITING_NEW_SURNAME
+		return c.Send("Введите новую фамилию")
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onEditBirthdate(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_NEW_BIRTHDATE
-	return c.Send("Введите новый день рождения")
+func onEditBirthdate(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		states[c.Chat().ID] = constants.AWAITING_NEW_BIRTHDATE
+		return c.Send("Введите новый день рождения")
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onEditUserName(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_NEW_USERNAME
-	return c.Send("Введите новый ник в телеграме (начинается с @). Проверьте его правильность, т.к. по нему можно перейти к вам в личные сообщения")
+func onEditUserName(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		states[c.Chat().ID] = constants.AWAITING_NEW_USERNAME
+		return c.Send("Введите новый ник в телеграме (начинается с @). Проверьте его правильность, т.к. по нему можно перейти к вам в личные сообщения")
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingNewName(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
-	if service.UpdateName(c.Text(), c.Chat().ID) {
-		return c.Send("Имя успешно обновлено. Можете продолжить обновление", wantEditSelector)
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		if service.UpdateName(c.Text(), c.Chat().ID) {
+			return c.Send("Имя успешно обновлено. Можете продолжить обновление", wantEditSelector)
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingNewSurname(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
-	if service.UpdateSurname(c.Text(), c.Chat().ID) {
-		return c.Send("Фамилия успешно обновлена. Можете продолжить обновление", wantEditSelector)
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		if service.UpdateSurname(c.Text(), c.Chat().ID) {
+			return c.Send("Фамилия успешно обновлена. Можете продолжить обновление", wantEditSelector)
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingNewBirthdate(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
-	date, err := parseDate(c.Text())
-	if err != nil {
-		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		date, err := parseDate(c.Text())
+		if err != nil {
+			return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
+		}
+		if service.UpdateBirthdate(&date, c.Chat().ID) {
+			return c.Send("Дата успешно обновлена. Можете продолжить обновление", wantEditSelector)
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	if service.UpdateBirthdate(&date, c.Chat().ID) {
-		return c.Send("Дата успешно обновлена. Можете продолжить обновление", wantEditSelector)
-	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
-	if !strings.HasPrefix(c.Text(), "@") {
-		return c.Send("Неверный формат. Никнейм начинается с \"@\". Попробуйте еще раз")
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		if !strings.HasPrefix(c.Text(), "@") {
+			return c.Send("Неверный формат. Никнейм начинается с \"@\". Попробуйте еще раз")
+		}
+		if service.UpdateUsername(c.Text(), c.Chat().ID) {
+			return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", wantEditSelector)
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	if service.UpdateUsername(c.Text(), c.Chat().ID) {
-		return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", wantEditSelector)
-	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onButtonRegister(c telebot.Context, service sv.UserService) error {
-	if !service.CheckIfRegistered(c.Chat().ID) {
-		states[c.Chat().ID] = constants.AWAITING_BIRTHDATE
-		return c.Send("Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ")
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		if !service.CheckIfRegistered(c.Chat().ID) {
+			states[c.Chat().ID] = constants.AWAITING_BIRTHDATE
+			return c.Send("Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ")
+		}
+		return c.Send("Вы уже зарегистрированный пользователь. Возвращаем в начало", menu)
 	}
-	return c.Send("Вы уже зарегистрированный пользователь. Возвращаем в начало", menu)
-
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onButtonHelp(c telebot.Context) error {
-	return c.Send("Нажмите \"Регистрация\", чтобы начать ввод данных.", menu)
+func onButtonHelp(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		return c.Send("Нажмите \"Регистрация\", чтобы начать ввод данных.", menu)
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onButtonWishlist(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_WISHES
-	return c.Send("Введите свои пожелания через запятую (Майбах, бананы, вилла в Италии)", wishlistSelector)
+func onButtonWishlist(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		states[c.Chat().ID] = constants.AWAITING_WISHES
+		return c.Send("Введите свои пожелания через запятую (Майбах, бананы, вилла в Италии)", wishlistSelector)
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onButtonPrev(c telebot.Context) error {
-	delete(states, c.Chat().ID)
-	return c.Send("Возвращаем вас в начало", menu)
+func onButtonPrev(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		return c.Send("Возвращаем вас в начало", menu)
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onButtonAllUsers(c telebot.Context, service sv.UserService) error {
-	users := service.FindAll()
-	var response strings.Builder
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		users := service.FindAll()
+		var response strings.Builder
 
-	response.WriteString("*Список пользователей:*\n\n")
-	for _, user := range users {
-		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения: %s\n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+		response.WriteString("*Список пользователей:*\n\n")
+		for _, user := range users {
+			response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения: %s\n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+		}
+
+		return c.Send(response.String(), menu, telebot.ModeMarkdown)
 	}
-
-	return c.Send(response.String(), menu, telebot.ModeMarkdown)
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
-	date, err := parseDate(c.Text())
-	if err != nil {
-		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		date, err := parseDate(c.Text())
+		if err != nil {
+			return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
+		}
+		if service.UpdateBirthdate(&date, c.Chat().ID) {
+			states[c.Chat().ID] = constants.AWAITING_NAME
+			return c.Send("Дата успешно сохранена. Далее введите желаемое в системе имя")
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	if service.UpdateBirthdate(&date, c.Chat().ID) {
-		states[c.Chat().ID] = constants.AWAITING_NAME
-		return c.Send("Дата успешно сохранена. Далее введите желаемое в системе имя")
-	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingName(c telebot.Context, service sv.UserService) error {
-	if service.UpdateName(c.Text(), c.Chat().ID) {
-		states[c.Chat().ID] = constants.AWAITING_SURNAME
-		return c.Send("Имя успешно сохранено. Далее введите желаемую в системе фамилию")
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		if service.UpdateName(c.Text(), c.Chat().ID) {
+			states[c.Chat().ID] = constants.AWAITING_SURNAME
+			return c.Send("Имя успешно сохранено. Далее введите желаемую в системе фамилию")
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
-	if service.UpdateSurname(c.Text(), c.Chat().ID) {
-		service.UpdateStatus(constants.REGISTERED, c.Chat().ID)
-		delete(states, c.Chat().ID)
-		return c.Send("Фамилия успешно сохранена. Возвращаем в начальное меню", menu)
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		if service.UpdateSurname(c.Text(), c.Chat().ID) {
+			service.UpdateStatus(constants.REGISTERED, c.Chat().ID)
+			delete(states, c.Chat().ID)
+			return c.Send("Фамилия успешно сохранена. Возвращаем в начальное меню", menu)
+		}
+		return c.Send("Ошибка сохранения данных")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
-func onAwaitingWishlist(c telebot.Context) error {
-	delete(states, c.Chat().ID)
-	return c.Send("Ваш список желний успешно сохранен", menu)
+func onAwaitingWishlist(c telebot.Context, service sv.UserService) error {
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		delete(states, c.Chat().ID)
+		return c.Send("Ваш список желний успешно сохранен", menu)
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func onRestoreUser(c telebot.Context, service sv.UserService) error {
 	service.Restore(c.Chat().ID)
-	return nil
+	return c.Send("Вы успешно восстановлены в базе. Выбирайте дальнейшие действия", menu)
+
 }
 
 func onDeleteMe(c telebot.Context, service sv.UserService) error {
-	service.Delete(c.Chat().ID)
-	return nil
+	if !service.CheckIfDeleted(c.Chat().ID) {
+		service.Delete(c.Chat().ID)
+		return c.Send("Вы были удалены из базы. Для доступных действий начните с команды /start")
+	}
+	return c.Send("Вы удалены из базы. Но можете восстановиться", deletedSelector)
 }
 
 func parseDate(date string) (time.Time, error) {

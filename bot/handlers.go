@@ -6,7 +6,6 @@ import (
 	sv "wishlist-bot/service"
 )
 
-// todo delete me handler, all answers in this way
 func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
@@ -37,11 +36,11 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 		case constants.BTN_HELP:
 			return onButtonHelp(c)
 		case constants.BTN_WISHLIST:
-			return onButtonWishlist(c)
+			return onButtonWishlist(c, service)
 		case constants.BTN_ALL_USERS:
 			return onButtonAllUsers(c, service)
 		case constants.BTN_PREV:
-			return onButtonPrev(c)
+			return onButtonPrev(c, service)
 		case constants.BTN_RESTORE_USER:
 			return onRestoreUser(c, service)
 		case constants.BTN_DELETE_ME:
@@ -49,13 +48,13 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 		case constants.BTN_ME:
 			return onButtonMyData(c, service)
 		case constants.BTN_EDIT_NAME:
-			return onEditName(c)
+			return onEditName(c, service)
 		case constants.BTN_EDIT_SURNAME:
-			return onEditSurname(c)
+			return onEditSurname(c, service)
 		case constants.BTN_EDIT_BIRTHDATE:
-			return onEditBirthdate(c)
+			return onEditBirthdate(c, service)
 		case constants.BTN_EDIT_USERNAME:
-			return onEditUserName(c)
+			return onEditUserName(c, service)
 		}
 		return c.Respond()
 	})
@@ -84,7 +83,7 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 			return onAwaitingNewUsername(c, service)
 
 		case constants.AWAITING_WISHES:
-			return onAwaitingWishlist(c)
+			return onAwaitingWishlist(c, service)
 		default:
 			return c.Send("Неизвестное состояние. Пожалуйста, начните заново с команды /start.")
 		}
