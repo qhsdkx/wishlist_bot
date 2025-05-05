@@ -39,8 +39,8 @@ type User struct {
 func (ur *UserRepositoryImpl) Save(u *User) bool {
 	query := `INSERT INTO users(id, name, surname, username, birthdate, status)
 			  VALUES($1, $2, $3, $4, $5, $6)`
-	row := ur.DB.QueryRow(query, &u.ID, &u.Name, &u.Surname, &u.Username, &u.Birthdate, consta.ADDED)
-	return row != nil
+	_, err := ur.DB.Exec(query, &u.ID, &u.Name, &u.Surname, &u.Username, &u.Birthdate, consta.ADDED)
+	return err == nil
 }
 
 func (ur *UserRepositoryImpl) FindById(ID int64) User {
@@ -61,6 +61,9 @@ func (ur *UserRepositoryImpl) FindById(ID int64) User {
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
+
+	defer rows.Close()
+
 	for rows.Next() {
 		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
 		if errIn != nil {
@@ -78,7 +81,8 @@ func (ur *UserRepositoryImpl) FindAll() []User {
     	u.name as name,
     	u.surname as surname,
     	u.birthdate as birthdate,
-    	u.username as username
+    	u.username as username,
+    	u.status as status
 	FROM users u
 	WHERE u.deleted_at IS NULL
 	AND u.status = $1
@@ -87,9 +91,12 @@ func (ur *UserRepositoryImpl) FindAll() []User {
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
+
+	defer rows.Close()
+
 	for rows.Next() {
 		var u User
-		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username)
+		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
 		if errIn != nil {
 			fmt.Errorf("error at %s", errIn)
 		}
@@ -105,8 +112,8 @@ func (ur *UserRepositoryImpl) UpdateBirthdate(birthdate time.Time, ID int64) boo
     updated_at = now()
     WHERE deleted_at IS NULL
     AND id = $2`
-	row := ur.DB.QueryRow(query, &birthdate, &ID)
-	if row == nil {
+	_, err := ur.DB.Exec(query, &birthdate, &ID)
+	if err != nil {
 		fmt.Errorf("error at saving birthdate")
 		return false
 	}
@@ -120,8 +127,8 @@ func (ur *UserRepositoryImpl) UpdateName(name string, ID int64) bool {
     updated_at = now()
     WHERE deleted_at IS NULL
     AND id = $2`
-	row := ur.DB.QueryRow(query, &name, &ID)
-	if row == nil {
+	_, err := ur.DB.Exec(query, &name, &ID)
+	if err != nil {
 		fmt.Errorf("error at Saving name")
 		return false
 	}
@@ -135,8 +142,8 @@ SET
     updated_at = now()
     WHERE deleted_at IS NULL
     AND id = $2`
-	row := ur.DB.QueryRow(query, &surname, &ID)
-	if row == nil {
+	_, err := ur.DB.Exec(query, &surname, &ID)
+	if err != nil {
 		fmt.Errorf("error at saving surname")
 		return false
 	}
@@ -145,13 +152,13 @@ SET
 
 func (ur *UserRepositoryImpl) UpdateUsername(username string, ID int64) bool {
 	query := `UPDATE users
-SET
+	SET
     username = $1,
     updated_at = now()
     WHERE deleted_at IS NULL
     AND id = $2`
-	row := ur.DB.QueryRow(query, &username, &ID)
-	if row == nil {
+	_, err := ur.DB.Exec(query, &username, &ID)
+	if err != nil {
 		fmt.Errorf("error at saving username")
 		return false
 	}
@@ -165,8 +172,8 @@ func (ur *UserRepositoryImpl) UpdateStatus(status string, ID int64) {
     updated_at = now()
     WHERE deleted_at IS NULL
     AND id = $2`
-	row := ur.DB.QueryRow(query, &status, &ID)
-	if row == nil {
+	_, err := ur.DB.Exec(query, &status, &ID)
+	if err != nil {
 		fmt.Errorf("error at update status")
 	}
 }
@@ -176,7 +183,10 @@ func (ur *UserRepositoryImpl) Delete(ID int64) {
 	SET deleted_at = now(),
 	    updated_at = now()
 	WHERE id = $1`
-	_ = ur.DB.QueryRow(query, ID)
+	_, err := ur.DB.Exec(query, ID)
+	if err != nil {
+		fmt.Errorf("error at delete user")
+	}
 }
 
 func (ur *UserRepositoryImpl) Restore(ID int64) {
@@ -184,7 +194,10 @@ func (ur *UserRepositoryImpl) Restore(ID int64) {
 	SET deleted_at = NULL,
 	    updated_at = now()
 	WHERE id = $1`
-	_ = ur.DB.QueryRow(query, ID)
+	_, err := ur.DB.Exec(query, ID)
+	if err != nil {
+		fmt.Errorf("error at restore user")
+	}
 }
 
 func (ur *UserRepositoryImpl) ExistsById(ID int64) bool {
@@ -194,6 +207,9 @@ func (ur *UserRepositoryImpl) ExistsById(ID int64) bool {
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
+
+	defer exists.Close()
+
 	for exists.Next() {
 		errRead := exists.Scan(&result)
 		if errRead != nil {
@@ -210,6 +226,9 @@ func (ur *UserRepositoryImpl) CheckIfDeleted(ID int64) bool {
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
+
+	defer exists.Close()
+
 	if exists.Next() {
 		errRead := exists.Scan(&result)
 		if errRead != nil {
@@ -226,6 +245,9 @@ func (ur *UserRepositoryImpl) CheckIfRegistered(ID int64) bool {
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
+
+	defer exists.Close()
+
 	if exists.Next() {
 		errRead := exists.Scan(&result)
 		if errRead != nil {

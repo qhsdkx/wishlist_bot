@@ -9,13 +9,15 @@ import (
 	sv "wishlist-bot/service"
 )
 
-func NewBot() (*telebot.Bot, error) {
+var bot *telebot.Bot
+
+func newBot() (*telebot.Bot, error) {
 	err := godotenv.Load(".env")
 	pref := telebot.Settings{
 		Token:  os.Getenv("API_KEY"),
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
-	bot, err := telebot.NewBot(pref)
+	bot, err = telebot.NewBot(pref)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
@@ -24,8 +26,9 @@ func NewBot() (*telebot.Bot, error) {
 	return bot, nil
 }
 
-func Start(bot *telebot.Bot, service sv.UserService) {
+func SetUp(service sv.UserService) *telebot.Bot {
 	setUpButtons()
+	bot, _ = newBot()
 	setUpHandlers(bot, service)
-	bot.Start()
+	return bot
 }

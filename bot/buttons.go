@@ -7,7 +7,6 @@ import (
 
 var (
 	menu                 = &telebot.ReplyMarkup{OneTimeKeyboard: true}
-	regSelector          = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 	wishlistSelector     = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 	deletedSelector      = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 	wantEditSelector     = &telebot.ReplyMarkup{OneTimeKeyboard: true}

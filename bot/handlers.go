@@ -7,7 +7,6 @@ import (
 )
 
 func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
-
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
 		exists := service.ExistsById(c.Chat().ID)
 		deleted := service.CheckIfDeleted(c.Chat().ID)
@@ -26,7 +25,7 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 
 	bot.Handle(constants.ON_HELP, func(c telebot.Context) error {
 		return c.Send("Это бот для работников ЦЦР. Сюда вы можете внести данные о своих пожелниях на день рождения для своих коллег")
-	})
+	}, CheckDeleted(service))
 
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
 		callback := c.Callback().Data[1:]
@@ -34,7 +33,7 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 		case constants.BTN_REGISTER:
 			return onButtonRegister(c, service)
 		case constants.BTN_HELP:
-			return onButtonHelp(c)
+			return onButtonHelp(c, service)
 		case constants.BTN_WISHLIST:
 			return onButtonWishlist(c, service)
 		case constants.BTN_ALL_USERS:
@@ -57,7 +56,7 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 			return onEditUserName(c, service)
 		}
 		return c.Respond()
-	})
+	}, CheckDeleted(service))
 
 	bot.Handle(telebot.OnText, func(c telebot.Context) error {
 		userState, exists := states[c.Chat().ID]
@@ -85,8 +84,8 @@ func setUpHandlers(bot *telebot.Bot, service sv.UserService) {
 		case constants.AWAITING_WISHES:
 			return onAwaitingWishlist(c, service)
 		default:
-			return c.Send("Неизвестное состояние. Пожалуйста, начните заново с команды /start.")
+			return onError(c)
 		}
-	})
+	}, CheckDeleted(service))
 
 }

@@ -28,7 +28,9 @@ func Init() (*sql.DB, error) {
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}
 
-	DB.SetMaxOpenConns(10)
+	conns, _ := strconv.Atoi(os.Getenv("MAX_DB_COONECTIONS"))
+
+	DB.SetMaxOpenConns(conns)
 	DB.SetMaxIdleConns(5)
 	DB.SetConnMaxLifetime(time.Minute * 30)
 

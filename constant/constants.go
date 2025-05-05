@@ -14,10 +14,7 @@ const (
 	BTN_EDIT_SURNAME      = "edit_surname"
 	BTN_EDIT_USERNAME     = "edit_username"
 	BTN_ME                = "me"
-	BTN_EDIT_MY_DATA      = "edit_my_data"
 	BTN_PREV              = "prev"
-	BTN_YES               = "yes"
-	BTN_NO                = "no"
 )
 
 const (
