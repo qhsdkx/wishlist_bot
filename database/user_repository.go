@@ -10,7 +10,8 @@ import (
 type UserRepository interface {
 	Save(user *User) bool
 	FindById(id int64) User
-	FindAll() []User
+	FindAllTotal() []User
+	FindAll(page, perPage int) []User
 	UpdateBirthdate(birthdate time.Time, ID int64) bool
 	UpdateName(name string, ID int64) bool
 	UpdateSurname(surname string, ID int64) bool
@@ -21,6 +22,7 @@ type UserRepository interface {
 	ExistsById(id int64) bool
 	CheckIfDeleted(ID int64) bool
 	CheckIfRegistered(ID int64) bool
+	GetCount() int
 }
 
 type UserRepositoryImpl struct {
@@ -73,21 +75,53 @@ func (ur *UserRepositoryImpl) FindById(ID int64) User {
 	return u
 }
 
-func (ur *UserRepositoryImpl) FindAll() []User {
-	var users []User
+func (ur *UserRepositoryImpl) FindAllTotal() []User {
 	query := `
-	SELECT 
-    	u.id as id,
-    	u.name as name,
-    	u.surname as surname,
-    	u.birthdate as birthdate,
-    	u.username as username,
-    	u.status as status
-	FROM users u
-	WHERE u.deleted_at IS NULL
-	AND u.status = $1
-`
+		SELECT
+	   	u.id as id,
+	   	u.name as name,
+	   	u.surname as surname,
+	   	u.birthdate as birthdate,
+	   	u.username as username,
+	   	u.status as status
+		FROM users u
+		WHERE u.deleted_at IS NULL
+		AND u.status = $1
+	`
+	var users []User
 	rows, err := ur.DB.Query(query, consta.REGISTERED)
+	if err != nil {
+		fmt.Errorf("error at %s", err)
+	}
+
+	defer rows.Close()
+
+	for rows.Next() {
+		var u User
+		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
+		if errIn != nil {
+			fmt.Errorf("error at %s", errIn)
+		}
+		users = append(users, u)
+	}
+	return users
+}
+
+func (ur *UserRepositoryImpl) FindAll(page, perPage int) []User {
+	var users []User
+
+	query := `SELECT 
+    	u.id as id,
+	   	u.name as name,
+	   	u.surname as surname,
+	   	u.birthdate as birthdate,
+	   	u.username as username,
+	   	u.status as status
+		FROM users u
+        WHERE status = $1 
+        ORDER BY name 
+        LIMIT $2 OFFSET $3`
+	rows, err := ur.DB.Query(query, consta.REGISTERED, page, perPage)
 	if err != nil {
 		fmt.Errorf("error at %s", err)
 	}
@@ -255,4 +289,23 @@ func (ur *UserRepositoryImpl) CheckIfRegistered(ID int64) bool {
 		}
 	}
 	return result
+}
+
+func (ur *UserRepositoryImpl) GetCount() int {
+	var count int
+	query := `SELECT COUNT(*) FROM users WHERE status = $1`
+	rows, err := ur.DB.Query(query, consta.REGISTERED)
+	if err != nil {
+		fmt.Errorf("error at %s", err)
+	}
+
+	defer rows.Close()
+
+	if rows.Next() {
+		errRead := rows.Scan(&count)
+		if errRead != nil {
+			fmt.Errorf("error at %s", err)
+		}
+	}
+	return count
 }

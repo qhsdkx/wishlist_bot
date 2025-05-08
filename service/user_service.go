@@ -17,7 +17,8 @@ type UserDto struct {
 type UserService interface {
 	Save(cRequest UserDto) bool
 	FindById(ID int64) UserDto
-	FindAll() []UserDto
+	FindAllTotal() []UserDto
+	FindAll(page, perPage int) ([]UserDto, *Pagination, error)
 	UpdateBirthdate(birthdate *time.Time, ID int64) bool
 	UpdateName(name string, ID int64) bool
 	UpdateSurname(surname string, ID int64) bool
@@ -44,15 +45,42 @@ func (us *UserServiceImpl) FindById(id int64) UserDto {
 	return *mapUserToDto(&user)
 }
 
-func (us *UserServiceImpl) FindAll() []UserDto {
-	users := us.Repo.FindAll()
-	var result []UserDto
-	for _, u := range users {
-		dto := mapUserToDto(&u)
-		result = append(result, *dto)
+func (us *UserServiceImpl) FindAllTotal() []UserDto {
+	users := us.Repo.FindAllTotal()
+	var userDtos []UserDto
+	for _, user := range users {
+		dto := mapUserToDto(&user)
+		userDtos = append(userDtos, *dto)
 	}
-	return result
+	return userDtos
 }
+
+func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, error) {
+	offset := (page - 1) * perPage
+	users := s.Repo.FindAll(perPage, offset)
+	var userDtos []UserDto
+	for _, user := range users {
+		dto := mapUserToDto(&user)
+		userDtos = append(userDtos, *dto)
+	}
+
+	total := s.Repo.GetCount()
+
+	pagination := NewPagination(total, perPage)
+	pagination.CurrentPage = page
+
+	return userDtos, pagination, nil
+}
+
+//func (us *UserServiceImpl) FindAll() []UserDto {
+//	users := us.Repo.FindAll()
+//	var result []UserDto
+//	for _, u := range users {
+//		dto := mapUserToDto(&u)
+//		result = append(result, *dto)
+//	}
+//	return result
+//}
 
 func (us *UserServiceImpl) UpdateBirthdate(birthdate *time.Time, ID int64) bool {
 	return us.Repo.UpdateBirthdate(*birthdate, ID)

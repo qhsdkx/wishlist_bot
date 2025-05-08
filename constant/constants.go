@@ -15,6 +15,9 @@ const (
 	BTN_EDIT_USERNAME     = "edit_username"
 	BTN_ME                = "me"
 	BTN_PREV              = "prev"
+
+	BTN_PREV_PAGE = "prev_page"
+	BTN_NEXT_PAGE = "next_page"
 )
 
 const (
@@ -36,4 +39,10 @@ const (
 const (
 	ON_START = "/start"
 	ON_HELP  = "/help"
+)
+
+const (
+	USERS_PER_PAGE   = 5
+	USER_DATA_PREFIX = "user_"
+	BACK_TO_LIST     = "back_to_list"
 )

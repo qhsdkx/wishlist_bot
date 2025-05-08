@@ -20,7 +20,7 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 	if scheduleTime == "" {
 		scheduleTime = "10:00"
 	}
-	_, err := s.Every(5).Seconds().Do(sendDailyNotifications, bot, userService)
+	_, err := s.Every(1).Days().At(scheduleTime).Do(sendDailyNotifications, bot, userService)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
@@ -29,14 +29,16 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 }
 
 func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
-	users := userService.FindAll()
+	users := userService.FindAllTotal()
 	birthdayTomorrow, others := splitUsersByBirthday(users, 1)
 	response := makeResponse(birthdayTomorrow)
-	for _, other := range others {
-		if other.Status == constants.REGISTERED {
-			_, err := bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
-			if err != nil {
-				log.Printf("Failed to send to user %d: %v", other.ID, err)
+	if len(birthdayTomorrow) > 0 {
+		for _, other := range others {
+			if other.Status == constants.REGISTERED {
+				_, err := bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
+				if err != nil {
+					log.Printf("Failed to send to user %d: %v", other.ID, err)
+				}
 			}
 		}
 	}
