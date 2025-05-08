@@ -26,10 +26,10 @@ func newBot() (*telebot.Bot, error) {
 	return bot, nil
 }
 
-func SetUp(userService sv.UserService, wishlistService sv.WishService) {
+func SetUp(userService sv.UserService, wishlistService sv.WishService) *telebot.Bot {
 	setUpButtons()
 	bot, _ = newBot()
 	setUpHandlers(bot, userService, wishlistService)
-	bot.Start() //todo dont forget remove this
-	//return bot
+	bot.Start()
+	return bot
 }

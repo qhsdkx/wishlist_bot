@@ -4,6 +4,7 @@ import (
 	"fmt"
 	b "wishlist-bot/bot"
 	"wishlist-bot/database"
+	"wishlist-bot/scheduler"
 	"wishlist-bot/service"
 )
 
@@ -16,10 +17,10 @@ func Start() {
 	wishlistService := &service.WishServiceImpl{Repository: wishlistRepository}
 	userRepository := &database.UserRepositoryImpl{DB: db}
 	userService := &service.UserServiceImpl{Repo: userRepository}
-	b.SetUp(userService, wishlistService)
-	//go func() {
-	//	scheduler.StartScheduler(bot, userService)
-	//}()
-	//bot.Start()
-	//select {}
+	bot := b.SetUp(userService, wishlistService)
+	go func() {
+		scheduler.StartScheduler(bot, userService)
+	}()
+	bot.Start()
+	select {}
 }
