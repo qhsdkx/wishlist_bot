@@ -2,7 +2,6 @@ package bot
 
 import (
 	"gopkg.in/telebot.v4"
-	"strconv"
 	"strings"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
@@ -27,12 +26,17 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 
 	bot.Handle(constants.ON_HELP, func(c telebot.Context) error {
 		return c.Send("Это бот для работников ЦЦР. Сюда вы можете внести данные о своих пожелниях на день рождения для своих коллег")
-	}, CheckDeleted(userService))
+	}, checkDeleted(userService))
 
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
+		var page, id string
 		callback := c.Callback().Data[1:]
-		id := strconv.FormatInt(c.Chat().ID, 10)
-		page := strings.Split(callback, "|")[1]
+		if strings.Contains(callback, "_") {
+			id = strings.Split(callback, "_")[1]
+		}
+		if strings.Contains(callback, "|") {
+			page = strings.Split(callback, "|")[1]
+		}
 		switch callback {
 		case constants.BTN_REGISTER:
 			return onButtonRegister(c, userService)
@@ -41,7 +45,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.BTN_WISHLIST:
 			return onButtonWishlist(c)
 		case constants.BTN_ALL_USERS:
-			return HandleUserList(c, userService)
+			return handleUserList(c, userService)
 		case constants.BTN_PREV:
 			return onButtonPrev(c)
 		case constants.BTN_RESTORE_USER:
@@ -65,10 +69,16 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.USER_DATA_PREFIX + id:
 			return onUserData(c, wishlistService)
 		case constants.BACK_TO_LIST:
-			return HandleUserList(c, userService)
+			return handleUserList(c, userService)
+		case constants.BTN_SHOW_ALL_WISHLIST:
+			return onShowWishlist(c, wishlistService)
+		case constants.BTN_REGISTER_WISHLIST:
+			return onButtonRegWishList(c)
+		case constants.DELETE_WISH:
+			return onButtonDeleteWish(c)
 		}
 		return c.Respond()
-	}, CheckDeleted(userService))
+	}, checkDeleted(userService))
 
 	bot.Handle(telebot.OnText, func(c telebot.Context) error {
 		userState, exists := states[c.Chat().ID]
@@ -95,9 +105,11 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 
 		case constants.AWAITING_WISHES:
 			return onAwaitingWishlist(c, wishlistService)
+		case constants.DELETE_WISH:
+			return onDeleteWish(c, wishlistService)
 		default:
 			return onError(c)
 		}
-	}, CheckDeleted(userService))
+	}, checkDeleted(userService))
 
 }

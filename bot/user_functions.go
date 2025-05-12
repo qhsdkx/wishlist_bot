@@ -5,7 +5,6 @@ import (
 	"gopkg.in/telebot.v4"
 	"strconv"
 	"strings"
-	"time"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
 )
@@ -92,11 +91,12 @@ func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
 }
 
 func onButtonRegister(c telebot.Context, service sv.UserService) error {
-	if !service.CheckIfRegistered(c.Chat().ID) {
+	if registered := !service.CheckIfRegistered(c.Chat().ID); registered {
 		states[c.Chat().ID] = constants.AWAITING_BIRTHDATE
 		if _, err := bot.Edit(c.Message(), "Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
 			return err
 		}
+		return nil
 	}
 	if _, err := bot.Edit(c.Message(), "Вы уже зарегистрированный пользователь. Возвращаем в начало", menu); err != nil {
 		return err
@@ -111,35 +111,13 @@ func onButtonHelp(c telebot.Context) error {
 	return nil
 }
 
-func onButtonWishlist(c telebot.Context) error {
-	states[c.Chat().ID] = constants.AWAITING_WISHES
-	if _, err := bot.Edit(c.Message(), "Введите свои пожелания через запятую (Майбах, бананы, вилла в Италии)", wishlistSelector, telebot.ModeMarkdown); err != nil {
-		return err
-	}
-	return nil
-}
-
 func onButtonPrev(c telebot.Context) error {
 	delete(states, c.Chat().ID)
 	if _, err := bot.Edit(c.Message(), "Возвращаем вас в начало", menu); err != nil {
-		return err
+		return c.Send("Непредвиденная ошибка. В наччало", menu)
 	}
 	return nil
 }
-
-//func onButtonAllUsers(c telebot.Context, service sv.UserService) error {
-//	users := service.FindAll()
-//	var response strings.Builder
-//
-//	response.WriteString("*Список пользователей:*\n\n")
-//	for _, user := range users {
-//		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения: %s\n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
-//	}
-//	if _, err := bot.Edit(c.Message(), response.String(), menu, telebot.ModeMarkdown); err != nil {
-//		return err
-//	}
-//	return nil
-//}
 
 func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
 	date, err := parseDate(c.Text())
@@ -170,22 +148,6 @@ func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
 	return c.Send("Ошибка сохранения данных")
 }
 
-func onAwaitingWishlist(c telebot.Context, wishlistService sv.WishService) error {
-	delete(states, c.Chat().ID)
-	noSpace := strings.ReplaceAll(c.Text(), " ", "")
-	splits := strings.Split(noSpace, ",")
-	var wishes []sv.WishDto
-	for _, split := range splits {
-		wish := sv.WishDto{WishText: split, UserId: c.Chat().ID}
-		wishes = append(wishes, wish)
-	}
-	err := wishlistService.SaveAll(wishes)
-	if err != nil {
-		c.Send(fmt.Sprintf("Ошибка во время сохранения %+v", err))
-	}
-	return c.Send("Ваш список желаний успешно сохранен", menu)
-}
-
 func onRestoreUser(c telebot.Context, service sv.UserService) error {
 	service.Restore(c.Chat().ID)
 	return c.Send("Вы успешно восстановлены в базе. Выбирайте дальнейшие действия", menu)
@@ -196,29 +158,7 @@ func onDeleteMe(c telebot.Context, service sv.UserService) error {
 	return c.Send("Вы были удалены из базы. Для доступных действий начните с команды /start")
 }
 
-func onError(c telebot.Context) error {
-	delete(states, c.Chat().ID)
-	return c.Send("Неизвестное состояние. Пожалуйста, начните заново с команды /start.")
-}
-
-func parseDate(date string) (time.Time, error) {
-	parsedDate, err := time.Parse("02.01.2006", date)
-	return parsedDate, err
-}
-
-func CheckDeleted(service sv.UserService) telebot.MiddlewareFunc {
-	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
-		return func(c telebot.Context) error {
-			if service.CheckIfDeleted(c.Chat().ID) {
-				_, err := bot.Edit(c.Message(), "Вы удалены...", deletedSelector)
-				return err
-			}
-			return next(c)
-		}
-	}
-}
-
-func HandleUserList(c telebot.Context, userService sv.UserService) error {
+func handleUserList(c telebot.Context, userService sv.UserService) error {
 	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE)
 	if err != nil {
 		return c.Send("Ошибка получения данных")
@@ -243,12 +183,12 @@ func onUserData(c telebot.Context, wishlistService sv.WishService) error {
 		userId, _ := strconv.ParseInt(data[len(constants.USER_DATA_PREFIX):], 10, 64)
 		return showUserDetails(c, userId, wishlistService)
 	}
-	return nil //todo rework this case
+	return c.Respond()
 }
 
 func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebot.ReplyMarkup {
 	markup := &telebot.ReplyMarkup{}
-	rows := make([]telebot.Row, 0, len(users)+2)
+	rows := make([]telebot.Row, 0, len(users)+3)
 
 	for _, user := range users {
 		btn := markup.Data(
@@ -272,6 +212,7 @@ func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebo
 
 		rows = append(rows, markup.Row(paginationRow...))
 	}
+	rows = append(rows, markup.Row(markup.Data("В начало", constants.BTN_PREV)))
 
 	markup.Inline(rows...)
 	return markup
@@ -294,30 +235,4 @@ func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService
 	}
 
 	return c.Respond()
-}
-
-func updateUserListPage(c telebot.Context, page int, userService sv.UserService) error {
-	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE)
-	if err != nil {
-		return c.Respond(&telebot.CallbackResponse{
-			Text: "Ошибка обновления списка",
-		})
-	}
-
-	markup := createUserListMarkup(users, pagination)
-	_, err = bot.Edit(c.Message(), "Список пользователей:", markup)
-	if err != nil {
-		return c.Respond(&telebot.CallbackResponse{
-			Text: "Ошибка обновления",
-		})
-	}
-
-	return c.Respond()
-}
-
-func createBackButton() *telebot.ReplyMarkup {
-	markup := &telebot.ReplyMarkup{}
-	backBtn := markup.Data("Назад", constants.BACK_TO_LIST)
-	markup.Inline(markup.Row(backBtn))
-	return markup
 }

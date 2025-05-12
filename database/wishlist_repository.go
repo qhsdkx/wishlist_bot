@@ -14,11 +14,15 @@ type WRepository interface {
 	FindById(id int64) Wish
 	FindAllByUserId(userId int64) []Wish
 	Update(updateRequest Wish) int64
-	Delete(id int64)
+	Delete(s string) error
 }
 
 type WishlistRepository struct {
 	DB *sql.DB
+}
+
+func NewWishlistRepository(db *sql.DB) *WishlistRepository {
+	return &WishlistRepository{DB: db}
 }
 
 type Wish struct {
@@ -37,7 +41,6 @@ func (r *WishlistRepository) Save(w *Wish) int64 {
 	var id int64 = 0
 	err := r.DB.QueryRow(query, &w.WishText, &w.UserID).Scan(&id)
 	if err != nil {
-		_ = r.DB.Close()
 		fmt.Errorf("error at %s", err)
 	}
 	return id
@@ -47,7 +50,7 @@ func (r *WishlistRepository) SaveAll(wishes []*Wish) error {
 	if len(wishes) == 0 {
 		return errors.New("no wishes to save")
 	}
-	query := `INSERT INTO wishes(wish_text, user_id) VALUES `
+	query := `INSERT INTO wishes(wish_text, user_id) VALUES`
 	values := make([]interface{}, 0, len(wishes)*2)
 	for i, w := range wishes {
 		if i > 0 {
@@ -78,7 +81,6 @@ func (r *WishlistRepository) FindById(ID int64) Wish {
 	w := Wish{}
 	rows, err := r.DB.Query(query, ID)
 	if err != nil {
-		_ = r.DB.Close()
 		fmt.Errorf("error at %s", err)
 	}
 	defer rows.Close()
@@ -105,8 +107,7 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) []Wish {
 	w := Wish{}
 	rows, err := r.DB.Query(query, ID)
 	if err != nil {
-		_ = r.DB.Close()
-		fmt.Errorf("error at %s", err)
+		_ = fmt.Errorf("error at %s", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -128,17 +129,17 @@ func (r *WishlistRepository) Update(w Wish) int64 {
 	var id int64 = 0
 	err := r.DB.QueryRow(query, &w.WishText, &w.UserID, &w.DeletedAt).Scan(&id)
 	if err != nil {
-		_ = r.DB.Close()
 		fmt.Errorf("error at %s", err)
 	}
 	return id
 }
 
-func (r *WishlistRepository) Delete(ID int64) {
-	query := `UPDATE wishes SET DELETED_at = NOW() WHERE id = $1`
-	_, err := r.DB.Exec(query, &ID)
-	if err != nil {
-		_ = r.DB.Close()
-		fmt.Errorf("error at %s", err)
+func (r *WishlistRepository) Delete(s string) error {
+	var deletedAt time.Time
+	query := `UPDATE wishes SET DELETED_AT = NOW() WHERE wish_text LIKE $1 RETURNING deleted_at`
+	err := r.DB.QueryRow(query, &s).Scan(&deletedAt)
+	if err != nil || deletedAt.IsZero() {
+		return fmt.Errorf("error at %s", err)
 	}
+	return nil
 }

@@ -30,6 +30,5 @@ func SetUp(userService sv.UserService, wishlistService sv.WishService) *telebot.
 	setUpButtons()
 	bot, _ = newBot()
 	setUpHandlers(bot, userService, wishlistService)
-	bot.Start()
 	return bot
 }

@@ -11,6 +11,7 @@ var (
 	deletedSelector      = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 	wantEditSelector     = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 	onlyRegisterSelector = &telebot.ReplyMarkup{OneTimeKeyboard: true}
+	onlyBack             = &telebot.ReplyMarkup{OneTimeKeyboard: true}
 )
 
 var (
@@ -18,20 +19,22 @@ var (
 	btnRegister = menu.Data("Регистрация", consta.BTN_REGISTER)
 	btnWishlist = menu.Data("Список желаний", consta.BTN_WISHLIST)
 	btnAllUsers = menu.Data("Показать всех пользователей", consta.BTN_ALL_USERS)
-	btnRestore  = deletedSelector.Data("Восстановить меня в системе", consta.BTN_RESTORE_USER)
 	btnDeleteMe = menu.Data("Удалить меня в базе", consta.BTN_DELETE_ME)
 	btnMe       = menu.Data("Мои данные", consta.BTN_ME)
+	btnRestore  = deletedSelector.Data("Восстановить меня в системе", consta.BTN_RESTORE_USER)
 )
 
 var (
-	//btnShowWishlist = menu.Data("Показать мои пожелания", consta.BTN_SHOW_ALL_WISHLIST)
-	//btnRegWishlist  = menu.Data("Внести пожелания", consta.BTN_REGISTER_WISHLIST)
+	btnShowWishlist = menu.Data("Показать мои пожелания", consta.BTN_SHOW_ALL_WISHLIST)
+	btnRegWishlist  = menu.Data("Внести пожелания", consta.BTN_REGISTER_WISHLIST)
+	btnDeleteWish   = menu.Data("Удалить пожелание", consta.DELETE_WISH)
 
-	btnBirthdate = wantEditSelector.Data("Дата рождения", consta.BTN_EDIT_BIRTHDATE)
-	btnSurname   = wantEditSelector.Data("Фамилия", consta.BTN_EDIT_SURNAME)
-	btnName      = wantEditSelector.Data("Имя", consta.BTN_EDIT_NAME)
-	btnUsername  = wantEditSelector.Data("Никнейм в телеграме", consta.BTN_EDIT_USERNAME)
-	btnPrev      = wantEditSelector.Data("⬅", consta.BTN_PREV)
+	btnBirthdate          = wantEditSelector.Data("Дата рождения", consta.BTN_EDIT_BIRTHDATE)
+	btnSurname            = wantEditSelector.Data("Фамилия", consta.BTN_EDIT_SURNAME)
+	btnName               = wantEditSelector.Data("Имя", consta.BTN_EDIT_NAME)
+	btnUsername           = wantEditSelector.Data("Никнейм в телеграме", consta.BTN_EDIT_USERNAME)
+	btnPrev               = wantEditSelector.Data("⬅", consta.BTN_PREV)
+	btnShowAnothersWishes = onlyBack.Data("Показать остальных", consta.BTN_ALL_USERS)
 )
 
 func setUpButtons() {
@@ -61,8 +64,13 @@ func setUpButtons() {
 		menu.Row(btnPrev),
 	)
 
-	//wishlistSelector.Inline(
-	//	wishlistSelector.Row(btnShowWishlist),
-	//	wishlistSelector.Row(btnRegWishlist),
-	//)
+	wishlistSelector.Inline(
+		wishlistSelector.Row(btnShowWishlist),
+		wishlistSelector.Row(btnRegWishlist),
+	)
+
+	onlyBack.Inline(
+		onlyBack.Row(btnShowAnothersWishes),
+		onlyBack.Row(btnDeleteWish),
+		wishlistSelector.Row(btnPrev))
 }

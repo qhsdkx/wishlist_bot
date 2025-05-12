@@ -13,8 +13,7 @@ import (
 )
 
 func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
-
-	location, _ := time.LoadLocation("Europe/Minsk")
+	location, _ := time.LoadLocation(constants.LOCATION)
 	s := gocron.NewScheduler(location)
 	scheduleTime := os.Getenv("NOTIFICATION_TIME")
 	if scheduleTime == "" {

@@ -35,6 +35,10 @@ type UserServiceImpl struct {
 	Repo database.UserRepository
 }
 
+func NewUserService(repo database.UserRepository) UserService {
+	return &UserServiceImpl{Repo: repo}
+}
+
 func (us *UserServiceImpl) Save(cRequest UserDto) bool {
 	user := mapUserDtoToUser(&cRequest)
 	return us.Repo.Save(user)

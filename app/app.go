@@ -13,10 +13,10 @@ func Start() {
 	if dbErr != nil {
 		fmt.Errorf("Error initializing database: %v", dbErr)
 	}
-	wishlistRepository := &database.WishlistRepository{DB: db}
-	wishlistService := &service.WishServiceImpl{Repository: wishlistRepository}
-	userRepository := &database.UserRepositoryImpl{DB: db}
-	userService := &service.UserServiceImpl{Repo: userRepository}
+	wishlistRepository := database.NewWishlistRepository(db)
+	wishlistService := service.NewWishService(wishlistRepository)
+	userRepository := database.NewUserRepository(db)
+	userService := service.NewUserService(userRepository)
 	bot := b.SetUp(userService, wishlistService)
 	go func() {
 		scheduler.StartScheduler(bot, userService)

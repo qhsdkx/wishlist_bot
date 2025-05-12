@@ -34,6 +34,7 @@ const (
 	AWAITING_NEW_NAME      = "awaiting_new_name"
 	AWAITING_NEW_SURNAME   = "awaiting_new_surname"
 	AWAITING_NEW_USERNAME  = "awaiting_new_username"
+	DELETE_WISH            = "delete_wish"
 )
 
 const (
@@ -42,7 +43,9 @@ const (
 )
 
 const (
-	USERS_PER_PAGE   = 5
+	USERS_PER_PAGE   = 10
 	USER_DATA_PREFIX = "user_"
 	BACK_TO_LIST     = "back_to_list"
 )
+
+const LOCATION = "Europe/Minsk"

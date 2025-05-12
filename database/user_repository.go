@@ -29,11 +29,15 @@ type UserRepositoryImpl struct {
 	DB *sql.DB
 }
 
+func NewUserRepository(db *sql.DB) UserRepository {
+	return &UserRepositoryImpl{DB: db}
+}
+
 type User struct {
 	ID        int64     `json:"id"`
-	Name      string    `json:"name" nullable:"true"`
-	Surname   string    `json:"surname" nullable:"true"`
-	Username  string    `json:"username" nullable:"true"`
+	Name      string    `json:"name"`
+	Surname   string    `json:"surname"`
+	Username  string    `json:"username"`
 	Status    string    `json:"status"`
 	Birthdate time.Time `json:"birthdate"`
 }
@@ -273,7 +277,7 @@ func (ur *UserRepositoryImpl) CheckIfDeleted(ID int64) bool {
 }
 
 func (ur *UserRepositoryImpl) CheckIfRegistered(ID int64) bool {
-	result := false
+	var result bool
 	query := `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND status = $2)`
 	exists, err := ur.DB.Query(query, &ID, consta.REGISTERED)
 	if err != nil {
