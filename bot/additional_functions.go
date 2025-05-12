@@ -2,7 +2,6 @@ package bot
 
 import (
 	"gopkg.in/telebot.v4"
-	"time"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
 )
@@ -31,11 +30,6 @@ func createBackButton() *telebot.ReplyMarkup {
 	backBtn := markup.Data("Назад", constants.BACK_TO_LIST)
 	markup.Inline(markup.Row(backBtn))
 	return markup
-}
-
-func parseDate(date string) (time.Time, error) {
-	parsedDate, err := time.Parse("02.01.2006", date)
-	return parsedDate, err
 }
 
 func checkDeleted(service sv.UserService) telebot.MiddlewareFunc {

@@ -5,6 +5,7 @@ import (
 	"gopkg.in/telebot.v4"
 	"strconv"
 	"strings"
+	"time"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
 )
@@ -69,7 +70,7 @@ func onAwaitingNewSurname(c telebot.Context, service sv.UserService) error {
 
 func onAwaitingNewBirthdate(c telebot.Context, service sv.UserService) error {
 	delete(states, c.Chat().ID)
-	date, err := parseDate(c.Text())
+	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
@@ -120,7 +121,7 @@ func onButtonPrev(c telebot.Context) error {
 }
 
 func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
-	date, err := parseDate(c.Text())
+	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
