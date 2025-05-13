@@ -15,20 +15,20 @@ type UserDto struct {
 }
 
 type UserService interface {
-	Save(cRequest UserDto) bool
-	FindById(ID int64) UserDto
-	FindAllTotal() []UserDto
+	Save(cRequest UserDto) error
+	FindById(ID int64) (UserDto, error)
+	FindAllTotal() ([]UserDto, error)
 	FindAll(page, perPage int) ([]UserDto, *Pagination, error)
-	UpdateBirthdate(birthdate *time.Time, ID int64) bool
-	UpdateName(name string, ID int64) bool
-	UpdateSurname(surname string, ID int64) bool
-	UpdateUsername(username string, ID int64) bool
-	UpdateStatus(status string, ID int64)
-	Delete(ID int64)
-	Restore(ID int64)
-	ExistsById(ID int64) bool
-	CheckIfDeleted(ID int64) bool
-	CheckIfRegistered(ID int64) bool
+	UpdateBirthdate(birthdate *time.Time, ID int64) error
+	UpdateName(name string, ID int64) error
+	UpdateSurname(surname string, ID int64) error
+	UpdateUsername(username string, ID int64) error
+	UpdateStatus(status string, ID int64) error
+	Delete(ID int64) error
+	Restore(ID int64) error
+	ExistsById(ID int64) error
+	CheckIfDeleted(ID int64) error
+	CheckIfRegistered(ID int64) error
 }
 
 type UserServiceImpl struct {
@@ -39,36 +39,48 @@ func NewUserService(repo database.UserRepository) UserService {
 	return &UserServiceImpl{Repo: repo}
 }
 
-func (us *UserServiceImpl) Save(cRequest UserDto) bool {
+func (us *UserServiceImpl) Save(cRequest UserDto) error {
 	user := mapUserDtoToUser(&cRequest)
 	return us.Repo.Save(user)
 }
 
-func (us *UserServiceImpl) FindById(id int64) UserDto {
-	user := us.Repo.FindById(id)
-	return *mapUserToDto(&user)
+func (us *UserServiceImpl) FindById(id int64) (UserDto, error) {
+	user, err := us.Repo.FindById(id)
+	if err != nil {
+		return UserDto{}, err
+	}
+	return *mapUserToDto(&user), nil
 }
 
-func (us *UserServiceImpl) FindAllTotal() []UserDto {
-	users := us.Repo.FindAllTotal()
+func (us *UserServiceImpl) FindAllTotal() ([]UserDto, error) {
+	users, err := us.Repo.FindAllTotal()
+	if err != nil {
+		return nil, err
+	}
 	var userDtos []UserDto
 	for _, user := range users {
 		dto := mapUserToDto(&user)
 		userDtos = append(userDtos, *dto)
 	}
-	return userDtos
+	return userDtos, nil
 }
 
 func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, error) {
 	offset := (page - 1) * perPage
-	users := s.Repo.FindAll(perPage, offset)
+	users, err := s.Repo.FindAll(perPage, offset)
+	if err != nil {
+		return nil, nil, err
+	}
 	var userDtos []UserDto
 	for _, user := range users {
 		dto := mapUserToDto(&user)
 		userDtos = append(userDtos, *dto)
 	}
 
-	total := s.Repo.GetCount()
+	total, err := s.Repo.GetCount()
+	if err != nil {
+		return nil, nil, err
+	}
 
 	pagination := NewPagination(total, perPage)
 	pagination.CurrentPage = page
@@ -76,53 +88,42 @@ func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, er
 	return userDtos, pagination, nil
 }
 
-//func (us *UserServiceImpl) FindAll() []UserDto {
-//	users := us.Repo.FindAll()
-//	var result []UserDto
-//	for _, u := range users {
-//		dto := mapUserToDto(&u)
-//		result = append(result, *dto)
-//	}
-//	return result
-//}
-
-func (us *UserServiceImpl) UpdateBirthdate(birthdate *time.Time, ID int64) bool {
+func (us *UserServiceImpl) UpdateBirthdate(birthdate *time.Time, ID int64) error {
 	return us.Repo.UpdateBirthdate(*birthdate, ID)
 }
 
-func (us *UserServiceImpl) UpdateName(name string, ID int64) bool {
+func (us *UserServiceImpl) UpdateName(name string, ID int64) error {
 	return us.Repo.UpdateName(name, ID)
 }
 
-func (us *UserServiceImpl) UpdateSurname(surname string, ID int64) bool {
+func (us *UserServiceImpl) UpdateSurname(surname string, ID int64) error {
 	return us.Repo.UpdateSurname(surname, ID)
 }
 
-func (us *UserServiceImpl) UpdateStatus(status string, ID int64) {
-	us.Repo.UpdateStatus(status, ID)
+func (us *UserServiceImpl) UpdateStatus(status string, ID int64) error {
+	return us.Repo.UpdateStatus(status, ID)
 }
 
-func (us *UserServiceImpl) UpdateUsername(username string, ID int64) bool {
+func (us *UserServiceImpl) UpdateUsername(username string, ID int64) error {
 	return us.Repo.UpdateUsername(username, ID)
 }
 
-func (us *UserServiceImpl) Delete(id int64) {
-	us.Repo.Delete(id)
+func (us *UserServiceImpl) Delete(id int64) error {
+	return us.Repo.Delete(id)
 }
 
-func (us *UserServiceImpl) Restore(id int64) {
-	us.Repo.Restore(id)
+func (us *UserServiceImpl) Restore(id int64) error {
+	return us.Repo.Restore(id)
 }
 
-func (us *UserServiceImpl) ExistsById(id int64) bool {
-	existsById := us.Repo.ExistsById(id)
-	return existsById
+func (us *UserServiceImpl) ExistsById(id int64) error {
+	return us.Repo.ExistsById(id)
 }
 
-func (us *UserServiceImpl) CheckIfDeleted(id int64) bool {
+func (us *UserServiceImpl) CheckIfDeleted(id int64) error {
 	return us.Repo.CheckIfDeleted(id)
 }
 
-func (us *UserServiceImpl) CheckIfRegistered(id int64) bool {
+func (us *UserServiceImpl) CheckIfRegistered(id int64) error {
 	return us.Repo.CheckIfRegistered(id)
 }

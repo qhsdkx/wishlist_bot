@@ -6,6 +6,7 @@ import (
 	"gopkg.in/telebot.v4"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 	constants "wishlist-bot/constant"
@@ -28,13 +29,20 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 }
 
 func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
-	users := userService.FindAllTotal()
+	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
+	users, err := userService.FindAllTotal()
+	if err != nil {
+		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf(""))
+		if sendErr != nil {
+			log.Printf("Error sending daily notifications: %v", sendErr)
+		}
+	}
 	birthdayTomorrow, others := splitUsersByBirthday(users, 1)
 	response := makeResponse(birthdayTomorrow)
 	if len(birthdayTomorrow) > 0 {
 		for _, other := range others {
 			if other.Status == constants.REGISTERED {
-				_, err := bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
+				_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
 				if err != nil {
 					log.Printf("Failed to send to user %d: %v", other.ID, err)
 				}

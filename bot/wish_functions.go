@@ -23,7 +23,12 @@ func onDeleteWish(c telebot.Context, wishlistService sv.WishService) error {
 }
 
 func onShowWishlist(c telebot.Context, service sv.WishService) error {
-	wishes := service.FindAllByUserId(c.Chat().ID)
+	wishes, err := service.FindAllByUserId(c.Chat().ID)
+	if err != nil {
+		return c.Respond(&telebot.CallbackResponse{
+			Text: fmt.Sprintf("Ошибка поиска пожеланий юзера с айди %d", c.Chat().ID),
+		})
+	}
 
 	var msg strings.Builder
 	msg.WriteString("🎁 Список желаний:\n\n")
@@ -31,7 +36,7 @@ func onShowWishlist(c telebot.Context, service sv.WishService) error {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))
 	}
 
-	_, err := bot.Edit(c.Message(), msg.String(), onlyBack)
+	_, err = bot.Edit(c.Message(), msg.String(), onlyBack)
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка отображения данных",

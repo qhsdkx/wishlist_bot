@@ -35,7 +35,7 @@ func createBackButton() *telebot.ReplyMarkup {
 func checkDeleted(service sv.UserService) telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(c telebot.Context) error {
-			if service.CheckIfDeleted(c.Chat().ID) && c.Callback().Data[1:] != constants.BTN_RESTORE_USER {
+			if err := service.CheckIfDeleted(c.Chat().ID); err != nil && c.Callback().Data[1:] != constants.BTN_RESTORE_USER {
 				_, err := bot.Edit(c.Message(), "Вы удалены. Доступны следующие действия", deletedSelector)
 				return err
 			}

@@ -11,14 +11,14 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
 		exists := userService.ExistsById(c.Chat().ID)
 		deleted := userService.CheckIfDeleted(c.Chat().ID)
-		if !exists && !deleted {
+		if exists == nil && deleted == nil {
 			userDto := sv.UserDto{ID: c.Chat().ID, Name: c.Chat().FirstName, Surname: c.Chat().LastName, Username: c.Chat().Username}
-			if userService.Save(userDto) {
+			saved := userService.Save(userDto)
+			if saved == nil {
 				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР (даты рождения и пожелания)\n"+
 					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных (на данный момент сохранен лишь ID никнейм и имя, доступные для бота) нажмите кнопку \"Регистрация\"", menu)
 			}
-			return c.Send("Ошибка при сохранении ваших данных")
-		} else if deleted {
+		} else if deleted != nil {
 			return c.Send("Приветствуем, "+c.Chat().Username+". Спасибо, что вернулись. Выберите действие", deletedSelector)
 		}
 		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)

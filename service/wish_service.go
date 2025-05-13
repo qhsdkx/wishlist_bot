@@ -8,10 +8,10 @@ type WishDto struct {
 }
 
 type WishService interface {
-	Save(cRequest WishDto) int64
+	Save(cRequest WishDto) error
 	SaveAll(wishList []WishDto) error
-	FindAllByUserId(userId int64) []WishDto
-	Update(uRequest WishDto) int64
+	FindAllByUserId(userId int64) ([]WishDto, error)
+	Update(uRequest WishDto) error
 	Delete(s string) error
 }
 
@@ -23,7 +23,7 @@ func NewWishService(repository db.WRepository) WishService {
 	return &WishServiceImpl{Repository: repository}
 }
 
-func (w *WishServiceImpl) Save(cRequest WishDto) int64 {
+func (w *WishServiceImpl) Save(cRequest WishDto) error {
 	wish := mapWishDtoToWish(cRequest)
 	return w.Repository.Save(wish)
 }
@@ -33,17 +33,20 @@ func (w *WishServiceImpl) SaveAll(wishList []WishDto) error {
 	return w.Repository.SaveAll(wishes)
 }
 
-func (w *WishServiceImpl) FindAllByUserId(userId int64) []WishDto {
-	wishes := w.Repository.FindAllByUserId(userId)
+func (w *WishServiceImpl) FindAllByUserId(userId int64) ([]WishDto, error) {
+	wishes, err := w.Repository.FindAllByUserId(userId)
+	if err != nil {
+		return nil, err
+	}
 	var result []WishDto
 	for _, wish := range wishes {
 		dto := mapWishToWishDto(&wish)
 		result = append(result, *dto)
 	}
-	return result
+	return result, nil
 }
 
-func (w *WishServiceImpl) Update(uRequest WishDto) int64 {
+func (w *WishServiceImpl) Update(uRequest WishDto) error {
 	wish := mapWishDtoToWish(uRequest)
 	return w.Repository.Save(wish)
 }
