@@ -261,7 +261,7 @@ func (ur *UserRepositoryImpl) ExistsById(ID int64) error {
 
 func (ur *UserRepositoryImpl) CheckIfDeleted(ID int64) error {
 	var result bool
-	query := `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NOT NULL)`
+	query := `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL)`
 	exists, err := ur.DB.Query(query, &ID)
 	if err != nil {
 		return fmt.Errorf("error at %s", err)
@@ -275,7 +275,7 @@ func (ur *UserRepositoryImpl) CheckIfDeleted(ID int64) error {
 			return fmt.Errorf("error at %s", err)
 		}
 	}
-	if result {
+	if !result {
 		return fmt.Errorf("user is deleted")
 	}
 	return nil

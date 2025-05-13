@@ -95,7 +95,7 @@ func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
 }
 
 func onButtonRegister(c telebot.Context, service sv.UserService) error {
-	if registered := service.CheckIfRegistered(c.Chat().ID); registered == nil {
+	if registered := service.CheckIfRegistered(c.Chat().ID); registered != nil {
 		states[c.Chat().ID] = constants.AWAITING_BIRTHDATE
 		if _, err := bot.Edit(c.Message(), "Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
 			return err

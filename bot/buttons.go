@@ -67,6 +67,7 @@ func setUpButtons() {
 	wishlistSelector.Inline(
 		wishlistSelector.Row(btnShowWishlist),
 		wishlistSelector.Row(btnRegWishlist),
+		wishlistSelector.Row(btnPrev),
 	)
 
 	onlyBack.Inline(

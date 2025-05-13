@@ -1,15 +1,44 @@
 services:
-  postgres:
-    image: postgis/postgis:latest
-    ports:
-      - "5432:5432"
-    container_name: wishlist
-    environment:
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=wishlist
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+    wishlist-bot:
+      build:
+        context: .
+      image: 10.0.14.15:5000/wishlist-bot:latest
+      container_name: wishlist-bot
+      working_dir: /build
+      ports:
+        - "8080:8080"
+      volumes:
+        - .:/build
+      command: sh -c "
+        go mod download &&
+        go build -o wishlist-bot &&
+        /build/wishlist-bot"
+
+
+    postgres:
+      image: postgres:latest
+      container_name: postgres_container
+      environment:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: wishlist
+        POSTGRES_DB: postgres
+        PGDATA: /var/lib/postgresql/data/pgdata
+      ports:
+        - "5432:5432"
+      volumes:
+        - ./pgdata:/var/lib/postgresql/data/pgdata
+          
+#    postgres:
+#      image: postgis/postgis:latest
+#      ports:
+#        - "5432:5432"
+#      container_name: wishlist
+#      environment:
+#        - POSTGRES_DB=postgres
+#        - POSTGRES_USER=postgres
+#        - POSTGRES_PASSWORD=wishlist
+#      healthcheck:
+#        test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+#        interval: 10s
+#        timeout: 5s
+#        retries: 5

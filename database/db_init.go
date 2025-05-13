@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"log"
 	"os"
 	"strconv"
 	"time"
@@ -25,6 +26,7 @@ func Init() (*sql.DB, error) {
 
 	db, err = sql.Open("postgres", psqlInfo)
 	if err != nil {
+		log.Println(err)
 		return nil, fmt.Errorf("error connecting to database: %w", err)
 	}
 
