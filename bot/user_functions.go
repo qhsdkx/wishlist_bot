@@ -22,17 +22,17 @@ func onButtonMyData(c telebot.Context, service sv.UserService) error {
 		response.WriteString("*Ваши данные:*\n\n")
 		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения:%s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
 		response.WriteString("Кнопками ниже вы можете обновить данные")
-		if _, err := bot.Edit(c.Message(), response.String(), wantEditSelector, telebot.ModeMarkdown); err != nil {
+		if _, err = bot.Edit(c.Message(), response.String(), wantEditSelector, telebot.ModeMarkdown); err != nil {
 			return err
 		}
-		return nil
+		return c.Respond()
 
 	}
 	response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом\n\nИмя: %s \nникнейм: %s", user.Name, user.Username))
-	if _, err := bot.Edit(c.Message(), response.String(), menu, telebot.ModeMarkdown); err != nil {
-		return err
+	if _, err = bot.Edit(c.Message(), response.String(), menu, telebot.ModeMarkdown); err != nil {
+		return c.Send(fmt.Sprintf("Непредвиденная ошибка %v", err))
 	}
-	return nil
+	return c.Respond()
 }
 
 func onEditName(c telebot.Context) error {
@@ -136,6 +136,9 @@ func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
 }
 
 func onAwaitingName(c telebot.Context, service sv.UserService) error {
+	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
+		return c.Send(fmt.Sprintf("Вероятно, вы ввели имя и фамилию сразу.\nВведите пожалуйста только имя"))
+	}
 	if err := service.UpdateName(c.Text(), c.Chat().ID); err == nil {
 		states[c.Chat().ID] = constants.AWAITING_SURNAME
 		return c.Send("Имя успешно сохранено. Далее введите желаемую в системе фамилию")

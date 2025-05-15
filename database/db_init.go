@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"strconv"
-	"time"
 )
 
 var db *sql.DB
@@ -34,7 +33,6 @@ func Init() (*sql.DB, error) {
 
 	db.SetMaxOpenConns(conns)
 	db.SetMaxIdleConns(5)
-	db.SetConnMaxLifetime(time.Minute * 30)
 
 	return db, db.Ping()
 }
