@@ -15,7 +15,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			userDto := sv.UserDto{ID: c.Chat().ID, Name: c.Chat().FirstName, Surname: c.Chat().LastName, Username: c.Chat().Username}
 			saved := userService.Save(userDto)
 			if saved == nil {
-				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР (даты рождения и пожелания)\n"+
+				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР (даты рождения и пожелания)\n\n"+
 					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных (на данный момент сохранен лишь ID никнейм и имя, доступные для бота) нажмите кнопку \"Регистрация\"", menu)
 			}
 		} else if deleted != nil && exists == nil {
@@ -43,13 +43,11 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.BTN_HELP:
 			return onButtonHelp(c)
 		case constants.BTN_WISHLIST:
-			return onButtonWishlist(c)
+			return onButtonWishlist(c, userService)
 		case constants.BTN_ALL_USERS:
 			return handleUserList(c, userService)
 		case constants.BTN_PREV:
 			return onButtonPrev(c)
-		case constants.BTN_RESTORE_USER:
-			return onRestoreUser(c, userService)
 		case constants.BTN_DELETE_ME:
 			return onDeleteMe(c, userService)
 		case constants.BTN_ME:
@@ -67,7 +65,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.BTN_NEXT_PAGE + "|" + page:
 			return onButtonPrevAndBack(c, userService)
 		case constants.USER_DATA_PREFIX + id:
-			return onUserData(c, wishlistService)
+			return onUserData(c, wishlistService, userService)
 		case constants.BACK_TO_LIST:
 			return handleUserList(c, userService)
 		case constants.BTN_SHOW_ALL_WISHLIST:

@@ -18,7 +18,6 @@ type UserRepository interface {
 	UpdateUsername(username string, ID int64) error
 	UpdateStatus(status string, ID int64) error
 	Delete(id int64) error
-	Restore(ID int64) error
 	ExistsById(id int64) error
 	CheckIfDeleted(ID int64) error
 	CheckIfRegistered(ID int64) error
@@ -214,25 +213,15 @@ func (ur *UserRepositoryImpl) UpdateStatus(status string, ID int64) error {
 }
 
 func (ur *UserRepositoryImpl) Delete(ID int64) error {
-	query := `UPDATE users
-	SET deleted_at = now(),
-	    updated_at = now()
-	WHERE id = $1`
-	_, err := ur.DB.Exec(query, ID)
+	wQuery := `DELETE FROM wishes WHERE user_id = $1`
+	_, err := ur.DB.Exec(wQuery, ID)
+	if err != nil {
+		return fmt.Errorf("error at delete wishes of user with id %d", ID)
+	}
+	query := `DELETE FROM users WHERE id = $1`
+	_, err = ur.DB.Exec(query, ID)
 	if err != nil {
 		return fmt.Errorf("error at delete user")
-	}
-	return nil
-}
-
-func (ur *UserRepositoryImpl) Restore(ID int64) error {
-	query := `UPDATE users
-	SET deleted_at = NULL,
-	    updated_at = now()
-	WHERE id = $1`
-	_, err := ur.DB.Exec(query, ID)
-	if err != nil {
-		return fmt.Errorf("error at restore user")
 	}
 	return nil
 }

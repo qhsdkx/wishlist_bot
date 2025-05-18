@@ -24,7 +24,10 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
-
+	_, err = s.Every(1).Monday().At(scheduleTime).Do(sendWeeklyNotifications, bot, userService)
+	if err != nil {
+		log.Fatalf("Error scheduling task: %v", err)
+	}
 	s.StartAsync()
 }
 
@@ -32,7 +35,7 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := userService.FindAllTotal()
 	if err != nil {
-		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf(""))
+		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
 		}
@@ -40,6 +43,29 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	birthdayTomorrow, others := splitUsersByBirthday(users, 1)
 	response := makeResponse(birthdayTomorrow)
 	if len(birthdayTomorrow) > 0 {
+		for _, other := range others {
+			if other.Status == constants.REGISTERED {
+				_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
+				if err != nil {
+					log.Printf("Failed to send to user %d: %v", other.ID, err)
+				}
+			}
+		}
+	}
+}
+
+func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
+	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
+	users, err := userService.FindAllTotal()
+	if err != nil {
+		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		if sendErr != nil {
+			log.Printf("Error sending daily notifications: %v", sendErr)
+		}
+	}
+	birthdayInWeek, others := splitWeeklyUsersByBirthday(users)
+	response := makeWeeklyResponse(birthdayInWeek)
+	if len(birthdayInWeek) > 0 {
 		for _, other := range others {
 			if other.Status == constants.REGISTERED {
 				_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
@@ -75,6 +101,33 @@ func makeResponse(users []sv.UserDto) string {
 	response.WriteString("Доброе утро!\nЗавтра день рождения у:\n")
 	for _, user := range users {
 		response.WriteString(fmt.Sprintf("(%s) %s %s\n\n", user.Username, user.Surname, user.Name))
+	}
+	return response.String()
+}
+
+func splitWeeklyUsersByBirthday(users []sv.UserDto) (birthdayInWeek []sv.UserDto, others []sv.UserDto) {
+	today := time.Now()
+	weekLater := today.AddDate(0, 0, 7)
+
+	for _, user := range users {
+		bd := user.Birthdate
+		currentYearBD := time.Date(today.Year(), bd.Month(), bd.Day(), 0, 0, 0, 0, time.UTC)
+
+		if (currentYearBD.After(today) || currentYearBD.Equal(today)) && currentYearBD.Before(weekLater) {
+			birthdayInWeek = append(birthdayInWeek, user)
+		} else {
+			others = append(others, user)
+		}
+	}
+
+	return birthdayInWeek, others
+}
+
+func makeWeeklyResponse(users []sv.UserDto) string {
+	var response strings.Builder
+	response.WriteString("Доброе утро!\nНа этой неделе день рождения у:\n")
+	for _, user := range users {
+		response.WriteString(fmt.Sprintf("(%s) %s %s. День рождения: %s\n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
 	}
 	return response.String()
 }

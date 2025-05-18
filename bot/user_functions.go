@@ -20,7 +20,7 @@ func onButtonMyData(c telebot.Context, service sv.UserService) error {
 	var response strings.Builder
 	if user.Status == constants.REGISTERED {
 		response.WriteString("*Ваши данные:*\n\n")
-		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения:%s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения: %s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
 		response.WriteString("Кнопками ниже вы можете обновить данные")
 		if _, err = bot.Edit(c.Message(), response.String(), wantEditSelector, telebot.ModeMarkdown); err != nil {
 			return err
@@ -56,39 +56,48 @@ func onEditUserName(c telebot.Context) error {
 }
 
 func onAwaitingNewName(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
+	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
+		return c.Send(fmt.Sprintf("Вероятно, вы ввели имя и фамилию сразу.\nВведите пожалуйста только имя"))
+	}
 	if err := service.UpdateName(c.Text(), c.Chat().ID); err == nil {
+		delete(states, c.Chat().ID)
 		return c.Send("Имя успешно обновлено. Можете продолжить обновление", wantEditSelector)
 	}
 	return c.Send("Ошибка сохранения данных")
 }
 
 func onAwaitingNewSurname(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
+	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
+		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова сразу.\nВведите пожалуйста только фамилию"))
+	}
 	if err := service.UpdateSurname(c.Text(), c.Chat().ID); err == nil {
+		delete(states, c.Chat().ID)
 		return c.Send("Фамилия успешно обновлена. Можете продолжить обновление", wantEditSelector)
 	}
 	return c.Send("Ошибка сохранения данных")
 }
 
 func onAwaitingNewBirthdate(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
 	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
 	if errUpdate := service.UpdateBirthdate(&date, c.Chat().ID); errUpdate == nil {
+		delete(states, c.Chat().ID)
 		return c.Send("Дата успешно обновлена. Можете продолжить обновление", wantEditSelector)
 	}
 	return c.Send("Ошибка сохранения данных")
 }
 
 func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
-	delete(states, c.Chat().ID)
 	if !strings.HasPrefix(c.Text(), "@") {
 		return c.Send("Неверный формат. Никнейм начинается с \"@\". Попробуйте еще раз")
 	}
+	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
+		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова.\nВведите пожалуйста ваш ник одним словом"))
+	}
 	if err := service.UpdateUsername(c.Text(), c.Chat().ID); err == nil {
+		delete(states, c.Chat().ID)
 		return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", wantEditSelector)
 	}
 	return c.Send("Ошибка сохранения данных")
@@ -109,7 +118,17 @@ func onButtonRegister(c telebot.Context, service sv.UserService) error {
 }
 
 func onButtonHelp(c telebot.Context) error {
-	if _, err := bot.Edit(c.Message(), "Нажмите \"Регистрация\", чтобы начать ввод данных.", menu); err != nil {
+	response := strings.Builder{}
+	response.WriteString(fmt.Sprintf("Данная система была создана с целью помощи работникам ЦЦР (пока что 9-го департамента) следить за днями рождения коллег\n"))
+	response.WriteString(fmt.Sprintf("\bВНИМАНИЕ.\b ВСЕ предусмотренные уведомления приходят только в случае полной регистрации пользоваетеля по кнопке \"Регистрация\"\n"))
+	response.WriteString(fmt.Sprintf("Короткая информация по возможностям бота:\n\n"))
+	response.WriteString(fmt.Sprintf("• \"Редактировать мои данные\" - кнопка, представляющая возмонжость изменения введенных при регистрации данных\n"))
+	response.WriteString(fmt.Sprintf("• \"Список желаний\" - дает возможность ввести ваши пожелания, удалить что-то либо посмотреть пожелания других\n"))
+	response.WriteString(fmt.Sprintf("• \"Регистрация\" - необходима для регистрации вас в системе (ввод имени, фамилии и даты рождения)\n"))
+	response.WriteString(fmt.Sprintf("• \"Показать всех пользователей\" - показывает всех ЗАРЕГИСТРИРОВАННЫХ пользователей. По нажатию на кнопку с именем покажется день рождения человека и его пожелания\n"))
+	response.WriteString(fmt.Sprintf("• \"Удалить меня в базе\" - полностью удаляет вас в базе. Далее необходимо следовать инструкции\n\n"))
+	response.WriteString(fmt.Sprintf("Это было кратко описание основных возможностей бота. Так как обратной связи пока нет, то в случае возникающих проблем или предложений пишите разработчику @qhsdkx"))
+	if _, err := bot.Edit(c.Message(), response.String(), menu); err != nil {
 		return err
 	}
 	return nil
@@ -147,6 +166,9 @@ func onAwaitingName(c telebot.Context, service sv.UserService) error {
 }
 
 func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
+	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
+		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию"))
+	}
 	if err := service.UpdateSurname(c.Text(), c.Chat().ID); err == nil {
 		errUpdate := service.UpdateStatus(constants.REGISTERED, c.Chat().ID)
 		if errUpdate != nil {
@@ -158,21 +180,19 @@ func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
 	return c.Send("Ошибка сохранения данных")
 }
 
-func onRestoreUser(c telebot.Context, service sv.UserService) error {
-	if err := service.Restore(c.Chat().ID); err != nil {
-		return c.Send(fmt.Sprintf("Ошибка при восстановлении юзера с айди %d", c.Chat().ID), menu)
-	}
-	return c.Send("Вы успешно восстановлены в базе. Выбирайте дальнейшие действия", menu)
-}
-
 func onDeleteMe(c telebot.Context, service sv.UserService) error {
 	if err := service.Delete(c.Chat().ID); err != nil {
 		return c.Send(fmt.Sprintf("Ошибка при удалении у юзера с айди %d", c.Chat().ID), menu)
 	}
-	return c.Send("Вы были удалены из базы. Для доступных действий начните с команды /start")
+	return c.Send("Вы и ваши пожелания были успешно удалены из базы. Для того, чтобы начать с самого начала введите /start")
 }
 
 func handleUserList(c telebot.Context, userService sv.UserService) error {
+	err := userService.CheckIfRegistered(c.Chat().ID)
+	if err != nil {
+		_, err = bot.Edit(c.Message(), "Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", menu)
+		return err
+	}
 	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE)
 	if err != nil {
 		return c.Send("Ошибка получения данных")
@@ -191,11 +211,11 @@ func onButtonPrevAndBack(c telebot.Context, userService sv.UserService) error {
 	return updateUserListPage(c, page, userService)
 }
 
-func onUserData(c telebot.Context, wishlistService sv.WishService) error {
+func onUserData(c telebot.Context, wishlistService sv.WishService, userService sv.UserService) error {
 	data := c.Callback().Data[1:]
 	if strings.HasPrefix(data, constants.USER_DATA_PREFIX) {
 		userId, _ := strconv.ParseInt(data[len(constants.USER_DATA_PREFIX):], 10, 64)
-		return showUserDetails(c, userId, wishlistService)
+		return showUserDetails(c, userId, wishlistService, userService)
 	}
 	return c.Respond()
 }
@@ -232,13 +252,18 @@ func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebo
 	return markup
 }
 
-func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService) error {
+func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService, userService sv.UserService) error {
 	wishes, err := wishService.FindAllByUserId(userId)
 	if err != nil {
 		return c.Send(fmt.Sprintf("Ошибка в поиске пожеланий у юзера с айди %d", userId), menu)
 	}
+	user, err := userService.FindById(userId)
+	if err != nil {
+		return c.Send("Почему-то не смогли найти этого пользователя в базе. Возвращаем в начало", menu)
+	}
 
 	var msg strings.Builder
+	msg.WriteString(fmt.Sprintf("День рождения у пользователя: %s", user.Birthdate.Format("02.01.2006")))
 	msg.WriteString("🎁 Список желаний:\n\n")
 	for _, wish := range wishes {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))

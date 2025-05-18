@@ -13,8 +13,7 @@ type WRepository interface {
 	SaveAll(w []*Wish) error
 	FindById(id int64) (Wish, error)
 	FindAllByUserId(userId int64) ([]Wish, error)
-	Update(updateRequest Wish) error
-	Delete(s string) error
+	Delete(s string, userID int64) error
 }
 
 type WishlistRepository struct {
@@ -114,23 +113,10 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
 	return wishes, nil
 }
 
-func (r *WishlistRepository) Update(w Wish) error {
-	query := `UPDATE wishes SET
-		wish_text = $1
-		WHERE user_id = $2
-		AND deleted_at IS NULL`
-	err := r.DB.QueryRow(query, &w.WishText, &w.UserID, &w.DeletedAt)
+func (r *WishlistRepository) Delete(s string, userID int64) error {
+	query := `DELETE FROM wishes WHERE wish_text LIKE $1 AND user_id = $2`
+	_, err := r.DB.Exec(query, &s, &userID)
 	if err != nil {
-		return fmt.Errorf("error at %s", err)
-	}
-	return nil
-}
-
-func (r *WishlistRepository) Delete(s string) error {
-	var deletedAt time.Time
-	query := `UPDATE wishes SET DELETED_AT = NOW() WHERE wish_text LIKE $1 RETURNING deleted_at`
-	err := r.DB.QueryRow(query, &s).Scan(&deletedAt)
-	if err != nil || deletedAt.IsZero() {
 		return fmt.Errorf("error at %s", err)
 	}
 	return nil

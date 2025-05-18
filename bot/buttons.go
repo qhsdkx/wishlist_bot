@@ -20,8 +20,7 @@ var (
 	btnWishlist = menu.Data("Список желаний", consta.BTN_WISHLIST)
 	btnAllUsers = menu.Data("Показать всех пользователей", consta.BTN_ALL_USERS)
 	btnDeleteMe = menu.Data("Удалить меня в базе", consta.BTN_DELETE_ME)
-	btnMe       = menu.Data("Мои данные", consta.BTN_ME)
-	btnRestore  = deletedSelector.Data("Восстановить меня в системе", consta.BTN_RESTORE_USER)
+	btnMe       = menu.Data("Редактировать мои данные", consta.BTN_ME)
 )
 
 var (
@@ -53,10 +52,6 @@ func setUpButtons() {
 		wantEditSelector.Row(btnSurname),
 		wantEditSelector.Row(btnUsername),
 		wantEditSelector.Row(btnPrev),
-	)
-
-	deletedSelector.Inline(
-		deletedSelector.Row(btnRestore),
 	)
 
 	onlyRegisterSelector.Inline(

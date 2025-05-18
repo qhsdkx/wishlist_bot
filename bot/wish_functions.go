@@ -15,7 +15,7 @@ func onButtonDeleteWish(c telebot.Context) error {
 
 func onDeleteWish(c telebot.Context, wishlistService sv.WishService) error {
 	delete(states, c.Chat().ID)
-	err := wishlistService.Delete(c.Text())
+	err := wishlistService.Delete(c.Text(), c.Chat().ID)
 	if err != nil {
 		return c.Send(fmt.Sprintf("Ошибка удаления. Возможно, вы ввели неккоректное название\nВозвращаем в начало"), menu)
 	}
@@ -61,7 +61,12 @@ func onAwaitingWishlist(c telebot.Context, wishlistService sv.WishService) error
 	return c.Send("Ваш список желаний успешно сохранен", menu)
 }
 
-func onButtonWishlist(c telebot.Context) error {
+func onButtonWishlist(c telebot.Context, userService sv.UserService) error {
+	err := userService.CheckIfRegistered(c.Chat().ID)
+	if err != nil {
+		_, err = bot.Edit(c.Message(), "Вы еще не зарегистрировались, чтобы пользоваться функционалом списка желаний. Пожалуйста, пройдите регистрацию", menu)
+		return err
+	}
 	if _, err := bot.Edit(c.Message(), "Что хотите сделать?", wishlistSelector); err != nil {
 		return c.Send(fmt.Sprintf("Что-то пошло не так\nв начало"), menu)
 	}

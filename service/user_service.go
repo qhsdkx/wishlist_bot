@@ -25,7 +25,6 @@ type UserService interface {
 	UpdateUsername(username string, ID int64) error
 	UpdateStatus(status string, ID int64) error
 	Delete(ID int64) error
-	Restore(ID int64) error
 	ExistsById(ID int64) error
 	CheckIfDeleted(ID int64) error
 	CheckIfRegistered(ID int64) error
@@ -110,10 +109,6 @@ func (us *UserServiceImpl) UpdateUsername(username string, ID int64) error {
 
 func (us *UserServiceImpl) Delete(id int64) error {
 	return us.Repo.Delete(id)
-}
-
-func (us *UserServiceImpl) Restore(id int64) error {
-	return us.Repo.Restore(id)
 }
 
 func (us *UserServiceImpl) ExistsById(id int64) error {
