@@ -26,7 +26,6 @@ type UserService interface {
 	UpdateStatus(status string, ID int64) error
 	Delete(ID int64) error
 	ExistsById(ID int64) error
-	CheckIfDeleted(ID int64) error
 	CheckIfRegistered(ID int64) error
 }
 
@@ -113,10 +112,6 @@ func (us *UserServiceImpl) Delete(id int64) error {
 
 func (us *UserServiceImpl) ExistsById(id int64) error {
 	return us.Repo.ExistsById(id)
-}
-
-func (us *UserServiceImpl) CheckIfDeleted(id int64) error {
-	return us.Repo.CheckIfDeleted(id)
 }
 
 func (us *UserServiceImpl) CheckIfRegistered(id int64) error {

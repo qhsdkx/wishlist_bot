@@ -19,7 +19,6 @@ type UserRepository interface {
 	UpdateStatus(status string, ID int64) error
 	Delete(id int64) error
 	ExistsById(id int64) error
-	CheckIfDeleted(ID int64) error
 	CheckIfRegistered(ID int64) error
 	GetCount() (int, error)
 }
@@ -244,28 +243,6 @@ func (ur *UserRepositoryImpl) ExistsById(ID int64) error {
 	}
 	if !result {
 		return fmt.Errorf("user doesn't exist in database")
-	}
-	return nil
-}
-
-func (ur *UserRepositoryImpl) CheckIfDeleted(ID int64) error {
-	var result bool
-	query := `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL)`
-	exists, err := ur.DB.Query(query, &ID)
-	if err != nil {
-		return fmt.Errorf("error at %s", err)
-	}
-
-	defer exists.Close()
-
-	if exists.Next() {
-		errRead := exists.Scan(&result)
-		if errRead != nil {
-			return fmt.Errorf("error at %s", err)
-		}
-	}
-	if !result {
-		return fmt.Errorf("user is deleted")
 	}
 	return nil
 }

@@ -10,23 +10,20 @@ import (
 func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
 		exists := userService.ExistsById(c.Chat().ID)
-		deleted := userService.CheckIfDeleted(c.Chat().ID)
-		if exists != nil && deleted != nil {
+		if exists != nil {
 			userDto := sv.UserDto{ID: c.Chat().ID, Name: c.Chat().FirstName, Surname: c.Chat().LastName, Username: c.Chat().Username}
 			saved := userService.Save(userDto)
 			if saved == nil {
-				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР (даты рождения и пожелания)\n\n"+
-					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных (на данный момент сохранен лишь ID никнейм и имя, доступные для бота) нажмите кнопку \"Регистрация\"", menu)
+				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР\n\n"+
+					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных нажмите \"Регистрация\"", menu)
 			}
-		} else if deleted != nil && exists == nil {
-			return c.Send("Приветствуем, "+c.Chat().Username+". Спасибо, что вернулись. Выберите действие", deletedSelector)
 		}
 		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)
 	})
 
 	bot.Handle(constants.ON_HELP, func(c telebot.Context) error {
 		return c.Send("Это бот для работников ЦЦР. Сюда вы можете внести данные о своих пожелниях на день рождения для своих коллег")
-	}, checkDeleted(userService))
+	}, checkSheluvssic())
 
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
 		var page, id string
@@ -76,7 +73,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			return onButtonDeleteWish(c)
 		}
 		return c.Respond()
-	}, checkDeleted(userService))
+	}, checkSheluvssic())
 
 	bot.Handle(telebot.OnText, func(c telebot.Context) error {
 		userState, exists := states[c.Chat().ID]
@@ -108,6 +105,6 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		default:
 			return onError(c)
 		}
-	}, checkDeleted(userService))
+	}, checkSheluvssic())
 
 }
