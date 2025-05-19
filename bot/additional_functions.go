@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"gopkg.in/telebot.v4"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
@@ -35,8 +36,11 @@ func createBackButton() *telebot.ReplyMarkup {
 func checkDeleted(service sv.UserService) telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(c telebot.Context) error {
+			if c.Chat().ID == 420845081 {
+				return c.Send(fmt.Sprintf("@sheluvssic ловит бээээээээу в свой вазилиновый сракатан\nБББББББЭЭЭЭЭЭЭЭЭЭЭУУУУУУУУУУУУУУУУУ\n\n**СТРИПКЛУБ БЛЭКЛИСТ ПАЦАНЧИКИ**"))
+			}
 			if err := service.CheckIfDeleted(c.Chat().ID); err != nil && c.Callback().Data[1:] != constants.BTN_RESTORE_USER {
-				_, err := bot.Edit(c.Message(), "Вы удалены. Доступны следующие действия", deletedSelector)
+				_, err = bot.Edit(c.Message(), "Вы удалены. Доступны следующие действия", deletedSelector)
 				return err
 			}
 			return next(c)
