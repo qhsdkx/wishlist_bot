@@ -15,7 +15,7 @@ var states = make(map[int64]string)
 func onButtonMyData(c telebot.Context, service sv.UserService) error {
 	user, err := service.FindById(c.Chat().ID)
 	if err != nil {
-		return c.Send(fmt.Sprintf("Невозиожно найти юзера по айди: %d", c.Chat().ID), menu)
+		return c.Edit(fmt.Sprintf("Невозиожно найти юзера по айди: %d", c.Chat().ID), menu)
 	}
 	var response strings.Builder
 	if user.Status == constants.REGISTERED {
@@ -30,29 +30,29 @@ func onButtonMyData(c telebot.Context, service sv.UserService) error {
 	}
 	response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом\n\nИмя: %s \nникнейм: %s", user.Name, user.Username))
 	if _, err = bot.Edit(c.Message(), response.String(), menu, telebot.ModeMarkdown); err != nil {
-		return c.Send(fmt.Sprintf("Непредвиденная ошибка %v", err))
+		return c.Edit(fmt.Sprintf("Непредвиденная ошибка %v", err), menu)
 	}
 	return c.Respond()
 }
 
 func onEditName(c telebot.Context) error {
 	states[c.Chat().ID] = constants.AWAITING_NEW_NAME
-	return c.Send("Введите новое имя")
+	return c.Edit("Введите новое имя")
 }
 
 func onEditSurname(c telebot.Context) error {
 	states[c.Chat().ID] = constants.AWAITING_NEW_SURNAME
-	return c.Send("Введите новую фамилию")
+	return c.Edit("Введите новую фамилию")
 }
 
 func onEditBirthdate(c telebot.Context) error {
 	states[c.Chat().ID] = constants.AWAITING_NEW_BIRTHDATE
-	return c.Send("Введите новый день рождения")
+	return c.Edit("Введите новый день рождения")
 }
 
 func onEditUserName(c telebot.Context) error {
 	states[c.Chat().ID] = constants.AWAITING_NEW_USERNAME
-	return c.Send("Введите новый ник в телеграме (начинается с @). Проверьте его правильность, т.к. по нему можно перейти к вам в личные сообщения")
+	return c.Edit("Введите новый ник в телеграме (начинается с @). Проверьте его правильность, т.к. по нему можно перейти к вам в личные сообщения")
 }
 
 func onAwaitingNewName(c telebot.Context, service sv.UserService) error {
@@ -63,7 +63,7 @@ func onAwaitingNewName(c telebot.Context, service sv.UserService) error {
 		delete(states, c.Chat().ID)
 		return c.Send("Имя успешно обновлено. Можете продолжить обновление", wantEditSelector)
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onAwaitingNewSurname(c telebot.Context, service sv.UserService) error {
@@ -74,7 +74,7 @@ func onAwaitingNewSurname(c telebot.Context, service sv.UserService) error {
 		delete(states, c.Chat().ID)
 		return c.Send("Фамилия успешно обновлена. Можете продолжить обновление", wantEditSelector)
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onAwaitingNewBirthdate(c telebot.Context, service sv.UserService) error {
@@ -86,7 +86,7 @@ func onAwaitingNewBirthdate(c telebot.Context, service sv.UserService) error {
 		delete(states, c.Chat().ID)
 		return c.Send("Дата успешно обновлена. Можете продолжить обновление", wantEditSelector)
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
@@ -100,18 +100,18 @@ func onAwaitingNewUsername(c telebot.Context, service sv.UserService) error {
 		delete(states, c.Chat().ID)
 		return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", wantEditSelector)
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onButtonRegister(c telebot.Context, service sv.UserService) error {
 	if registered := service.CheckIfRegistered(c.Chat().ID); registered != nil {
 		states[c.Chat().ID] = constants.AWAITING_BIRTHDATE
-		if _, err := bot.Edit(c.Message(), "Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
+		if err := c.Edit("Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
 			return err
 		}
 		return nil
 	}
-	if _, err := bot.Edit(c.Message(), "Вы уже зарегистрированный пользователь. Возвращаем в начало", menu); err != nil {
+	if err := c.Edit("Вы уже зарегистрированный пользователь. Возвращаем в начало", menu); err != nil {
 		return err
 	}
 	return nil
@@ -137,7 +137,7 @@ func onButtonHelp(c telebot.Context) error {
 func onButtonPrev(c telebot.Context) error {
 	delete(states, c.Chat().ID)
 	if _, err := bot.Edit(c.Message(), "Возвращаем вас в начало", menu); err != nil {
-		return c.Send("Непредвиденная ошибка. В начало", menu)
+		return c.Edit("Непредвиденная ошибка. В начало", menu)
 	}
 	return nil
 }
@@ -151,7 +151,7 @@ func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
 		states[c.Chat().ID] = constants.AWAITING_NAME
 		return c.Send("Дата успешно сохранена. Далее введите желаемое в системе имя")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onAwaitingName(c telebot.Context, service sv.UserService) error {
@@ -162,7 +162,7 @@ func onAwaitingName(c telebot.Context, service sv.UserService) error {
 		states[c.Chat().ID] = constants.AWAITING_SURNAME
 		return c.Send("Имя успешно сохранено. Далее введите желаемую в системе фамилию")
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
@@ -177,14 +177,15 @@ func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
 		delete(states, c.Chat().ID)
 		return c.Send("Фамилия успешно сохранена. Возвращаем в начальное меню", menu)
 	}
-	return c.Send("Ошибка сохранения данных")
+	return c.Send("Ошибка сохранения данных", menu)
 }
 
 func onDeleteMe(c telebot.Context, service sv.UserService) error {
 	if err := service.Delete(c.Chat().ID); err != nil {
-		return c.Send(fmt.Sprintf("Ошибка при удалении у юзера с айди %d", c.Chat().ID), menu)
+		err = c.Edit(fmt.Sprintf("Ошибка при удалении у юзера с айди %d", c.Chat().ID), menu)
+		return err
 	}
-	return c.Send("Вы и ваши пожелания были успешно удалены из базы. Для того, чтобы начать с самого начала введите /start")
+	return c.Edit("Вы и ваши пожелания были успешно удалены из базы. Для того, чтобы начать с самого начала введите /start")
 }
 
 func handleUserList(c telebot.Context, userService sv.UserService) error {
@@ -195,7 +196,7 @@ func handleUserList(c telebot.Context, userService sv.UserService) error {
 	}
 	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE)
 	if err != nil {
-		return c.Send("Ошибка получения данных")
+		return c.Edit("Ошибка получения данных", menu)
 	}
 
 	markup := createUserListMarkup(users, pagination)
@@ -255,11 +256,11 @@ func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebo
 func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService, userService sv.UserService) error {
 	wishes, err := wishService.FindAllByUserId(userId)
 	if err != nil {
-		return c.Send(fmt.Sprintf("Ошибка в поиске пожеланий у юзера с айди %d", userId), menu)
+		return c.Edit(fmt.Sprintf("Ошибка в поиске пожеланий у юзера с айди %d", userId), menu)
 	}
 	user, err := userService.FindById(userId)
 	if err != nil {
-		return c.Send("Почему-то не смогли найти этого пользователя в базе. Возвращаем в начало", menu)
+		return c.Edit("Почему-то не смогли найти этого пользователя в базе. Возвращаем в начало", menu)
 	}
 
 	var msg strings.Builder

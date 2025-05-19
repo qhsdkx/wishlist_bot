@@ -9,7 +9,6 @@ const (
 	BTN_SHOW_ALL_WISHLIST = "show_all_wishlist"
 	BTN_REGISTER_WISHLIST = "register_wishlist"
 	BTN_DELETE_ME         = "delete_me"
-	BTN_RESTORE_USER      = "restore_user"
 	BTN_EDIT_NAME         = "edit_name"
 	BTN_EDIT_SURNAME      = "edit_surname"
 	BTN_EDIT_USERNAME     = "edit_username"
@@ -35,6 +34,7 @@ const (
 	AWAITING_NEW_SURNAME   = "awaiting_new_surname"
 	AWAITING_NEW_USERNAME  = "awaiting_new_username"
 	DELETE_WISH            = "delete_wish"
+	SEND_MESSAGE_ADMIN     = "/send"
 )
 
 const (

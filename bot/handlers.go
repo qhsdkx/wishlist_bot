@@ -1,7 +1,10 @@
 package bot
 
 import (
+	"fmt"
 	"gopkg.in/telebot.v4"
+	"os"
+	"strconv"
 	"strings"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
@@ -17,6 +20,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР\n\n"+
 					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных нажмите \"Регистрация\"", menu)
 			}
+			return c.Send(fmt.Sprintf("Ошибка сохранения ваших данных. Напишите @qhsdkx %+v", saved))
 		}
 		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)
 	})
@@ -106,5 +110,33 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			return onError(c)
 		}
 	}, checkSheluvssic())
+
+	bot.Handle(constants.SEND_MESSAGE_ADMIN, func(c telebot.Context) error {
+		id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+		if c.Chat().ID != id {
+			return c.Send("Ты не админ, нельзя такое делать!!!")
+		}
+		if len(c.Text()) <= len(constants.SEND_MESSAGE_ADMIN)+1 {
+			return c.Send("Пустое не отправится")
+		}
+		message, found := strings.CutPrefix(c.Text(), constants.SEND_MESSAGE_ADMIN+" ")
+		if !found {
+			return c.Send("Ошибка с сообщением")
+		}
+		total, err := userService.FindAllTotal()
+		if err != nil {
+			return c.Send("Ошибка при извлечении юзеров")
+		}
+		for _, user := range total {
+			if user.ID == id {
+				continue
+			}
+			_, err = c.Bot().Send(telebot.ChatID(user.ID), message)
+			if err != nil {
+				return err
+			}
+		}
+		return c.Send("Все гуд")
+	})
 
 }
