@@ -88,7 +88,7 @@ func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 	   	u.status as status
 		FROM users u
 		WHERE u.deleted_at IS NULL
-		AND u.status = $1
+		AND CASE WHEN $1 != 'N' THEN u.status = $1 ELSE TRUE END;
 	`
 	var users []User
 	rows, err := ur.DB.Query(query, status)

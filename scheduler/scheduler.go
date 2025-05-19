@@ -33,7 +33,7 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 
 func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
-	users, err := userService.FindAllTotal()
+	users, err := userService.FindAllRegistered()
 	if err != nil {
 		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
@@ -44,11 +44,9 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	response := makeResponse(birthdayTomorrow)
 	if len(birthdayTomorrow) > 0 {
 		for _, other := range others {
-			if other.Status == constants.REGISTERED {
-				_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
-				if err != nil {
-					log.Printf("Failed to send to user %d: %v", other.ID, err)
-				}
+			_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
+			if err != nil {
+				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 		}
 	}
@@ -56,7 +54,7 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 
 func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
-	users, err := userService.FindAllTotal()
+	users, err := userService.FindAllRegistered()
 	if err != nil {
 		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
@@ -67,12 +65,11 @@ func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	response := makeWeeklyResponse(birthdayInWeek)
 	if len(birthdayInWeek) > 0 {
 		for _, other := range others {
-			if other.Status == constants.REGISTERED {
-				_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
-				if err != nil {
-					log.Printf("Failed to send to user %d: %v", other.ID, err)
-				}
+			_, err = bot.Send(telebot.ChatID(other.ID), response, telebot.ModeMarkdown)
+			if err != nil {
+				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
+
 		}
 	}
 }

@@ -18,7 +18,7 @@ type UserDto struct {
 type UserService interface {
 	Save(cRequest UserDto) error
 	FindById(ID int64) (UserDto, error)
-	FindAllTotal() ([]UserDto, error)
+	FindAllRegistered() ([]UserDto, error)
 	FindAll(page, perPage int) ([]UserDto, *Pagination, error)
 	FindAllUnregistered() ([]UserDto, error)
 	UpdateBirthdate(birthdate *time.Time, ID int64) error
@@ -52,7 +52,7 @@ func (us *UserServiceImpl) FindById(id int64) (UserDto, error) {
 	return *mapUserToDto(&user), nil
 }
 
-func (us *UserServiceImpl) FindAllTotal() ([]UserDto, error) {
+func (us *UserServiceImpl) FindAllRegistered() ([]UserDto, error) {
 	users, err := us.Repo.FindAllTotal(consta.REGISTERED)
 	if err != nil {
 		return nil, err

@@ -111,19 +111,47 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		}
 	}, checkSheluvssic())
 
-	bot.Handle(constants.SEND_MESSAGE_ADMIN, func(c telebot.Context) error {
+	bot.Handle(constants.SEND_MESSAGE_ADMIN+"_reg", func(c telebot.Context) error {
 		id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
 		if c.Chat().ID != id {
 			return c.Send("Ты не админ, нельзя такое делать!!!")
 		}
-		if len(c.Text()) <= len(constants.SEND_MESSAGE_ADMIN)+1 {
+		if len(c.Text()) <= len(constants.SEND_MESSAGE_ADMIN+"_reg")+1 {
 			return c.Send("Пустое не отправится")
 		}
-		message, found := strings.CutPrefix(c.Text(), constants.SEND_MESSAGE_ADMIN+" ")
+		message, found := strings.CutPrefix(c.Text(), constants.SEND_MESSAGE_ADMIN+"_reg ")
 		if !found {
 			return c.Send("Ошибка с сообщением")
 		}
-		total, err := userService.FindAllTotal()
+		total, err := userService.FindAllRegistered()
+		if err != nil {
+			return c.Send("Ошибка при извлечении юзеров")
+		}
+		for _, user := range total {
+			if user.ID == id {
+				continue
+			}
+			_, err = c.Bot().Send(telebot.ChatID(user.ID), message)
+			if err != nil {
+				return err
+			}
+		}
+		return c.Send("Все гуд")
+	})
+
+	bot.Handle(constants.SEND_MESSAGE_ADMIN+"_unreg", func(c telebot.Context) error {
+		id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+		if c.Chat().ID != id {
+			return c.Send("Ты не админ, нельзя такое делать!!!")
+		}
+		if len(c.Text()) <= len(constants.SEND_MESSAGE_ADMIN+"_unreg")+1 {
+			return c.Send("Пустое не отправится")
+		}
+		message, found := strings.CutPrefix(c.Text(), constants.SEND_MESSAGE_ADMIN+"_unreg ")
+		if !found {
+			return c.Send("Ошибка с сообщением")
+		}
+		total, err := userService.FindAllUnregistered()
 		if err != nil {
 			return c.Send("Ошибка при извлечении юзеров")
 		}
