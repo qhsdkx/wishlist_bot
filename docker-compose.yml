@@ -2,7 +2,7 @@ services:
   wishlist-bot:
     build:
       context: .
-    image: 10.0.14.15:5000/wishlist-bot:latest
+    image: 10.0.14.15:5000/wishlist-bot:1.0.1
     container_name: wishlist-bot
     ports:
       - "8080:8080"

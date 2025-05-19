@@ -4,6 +4,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 RUN go mod verify
 COPY . .
+RUN go build -o wishlist-bot
 EXPOSE 8080
 CMD ["/build/wishlist-bot"]
 
