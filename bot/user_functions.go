@@ -19,17 +19,17 @@ func onButtonMyData(c telebot.Context, service sv.UserService) error {
 	}
 	var response strings.Builder
 	if user.Status == constants.REGISTERED {
-		response.WriteString("*Ваши данные:*\n\n")
+		response.WriteString("Ваши данные:\n\n")
 		response.WriteString(fmt.Sprintf("Ник в телеграме: %s\n%s %s\nДата рождения: %s \n\n", user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
 		response.WriteString("Кнопками ниже вы можете обновить данные")
-		if _, err = bot.Edit(c.Message(), response.String(), wantEditSelector, telebot.ModeMarkdown); err != nil {
-			return err
+		if err = c.Edit(response.String(), wantEditSelector); err != nil {
+			return c.Edit(fmt.Sprintf("Ошибка с редактированием собщения (%+v)", err), menu)
 		}
 		return c.Respond()
 
 	}
 	response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом\n\nИмя: %s \nникнейм: %s", user.Name, user.Username))
-	if _, err = bot.Edit(c.Message(), response.String(), menu, telebot.ModeMarkdown); err != nil {
+	if _, err = bot.Edit(c.Message(), response.String(), menu); err != nil {
 		return c.Edit(fmt.Sprintf("Непредвиденная ошибка %v", err), menu)
 	}
 	return c.Respond()
