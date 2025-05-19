@@ -139,4 +139,21 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		return c.Send("Все гуд")
 	})
 
+	bot.Handle(constants.SHOW_UNREGISTERED, func(c telebot.Context) error {
+		id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+		if c.Chat().ID != id {
+			return c.Send("Ты не админ, нельзя такое делать!!!")
+		}
+		users, err := userService.FindAllUnregistered()
+		if err != nil {
+			return c.Send("Ошибка при извлечении пользователей")
+		}
+		var builder strings.Builder
+		builder.WriteString(fmt.Sprintf("Юзеры, которые не прошли полную регистрацию: \n\n"))
+		for _, user := range users {
+			builder.WriteString(fmt.Sprintf("- (%s) %s %s %s\n", user.Username, user.Name, user.Surname, user.Birthdate.Format("02.01.2006")))
+		}
+		return c.Send(builder.String())
+	})
+
 }

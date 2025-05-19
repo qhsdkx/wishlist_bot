@@ -10,7 +10,7 @@ import (
 type UserRepository interface {
 	Save(user *User) error
 	FindById(id int64) (User, error)
-	FindAllTotal() ([]User, error)
+	FindAllTotal(status string) ([]User, error)
 	FindAll(page, perPage int) ([]User, error)
 	UpdateBirthdate(birthdate time.Time, ID int64) error
 	UpdateName(name string, ID int64) error
@@ -77,7 +77,7 @@ func (ur *UserRepositoryImpl) FindById(ID int64) (User, error) {
 	return u, nil
 }
 
-func (ur *UserRepositoryImpl) FindAllTotal() ([]User, error) {
+func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 	query := `
 		SELECT
 	   	u.id as id,
@@ -91,7 +91,7 @@ func (ur *UserRepositoryImpl) FindAllTotal() ([]User, error) {
 		AND u.status = $1
 	`
 	var users []User
-	rows, err := ur.DB.Query(query, constants.REGISTERED)
+	rows, err := ur.DB.Query(query, status)
 	if err != nil {
 		return nil, fmt.Errorf("error at %s", err)
 	}

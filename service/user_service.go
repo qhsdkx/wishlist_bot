@@ -2,6 +2,7 @@ package service
 
 import (
 	"time"
+	consta "wishlist-bot/constant"
 	"wishlist-bot/database"
 )
 
@@ -19,6 +20,7 @@ type UserService interface {
 	FindById(ID int64) (UserDto, error)
 	FindAllTotal() ([]UserDto, error)
 	FindAll(page, perPage int) ([]UserDto, *Pagination, error)
+	FindAllUnregistered() ([]UserDto, error)
 	UpdateBirthdate(birthdate *time.Time, ID int64) error
 	UpdateName(name string, ID int64) error
 	UpdateSurname(surname string, ID int64) error
@@ -51,7 +53,7 @@ func (us *UserServiceImpl) FindById(id int64) (UserDto, error) {
 }
 
 func (us *UserServiceImpl) FindAllTotal() ([]UserDto, error) {
-	users, err := us.Repo.FindAllTotal()
+	users, err := us.Repo.FindAllTotal(consta.REGISTERED)
 	if err != nil {
 		return nil, err
 	}
@@ -84,6 +86,19 @@ func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, er
 	pagination.CurrentPage = page
 
 	return userDtos, pagination, nil
+}
+
+func (s *UserServiceImpl) FindAllUnregistered() ([]UserDto, error) {
+	users, err := s.Repo.FindAllTotal(consta.ADDED)
+	if err != nil {
+		return nil, err
+	}
+	var userDtos []UserDto
+	for _, user := range users {
+		dto := mapUserToDto(&user)
+		userDtos = append(userDtos, *dto)
+	}
+	return userDtos, nil
 }
 
 func (us *UserServiceImpl) UpdateBirthdate(birthdate *time.Time, ID int64) error {

@@ -35,6 +35,7 @@ const (
 	AWAITING_NEW_USERNAME  = "awaiting_new_username"
 	DELETE_WISH            = "delete_wish"
 	SEND_MESSAGE_ADMIN     = "/send"
+	SHOW_UNREGISTERED      = "/show"
 )
 
 const (
