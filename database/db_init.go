@@ -3,14 +3,13 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
-	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"strconv"
-)
 
-var db *sql.DB
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
+)
 
 func Init() (*sql.DB, error) {
 	err := godotenv.Load(".env")
@@ -23,7 +22,7 @@ func Init() (*sql.DB, error) {
 		os.Getenv("HOST"), port, os.Getenv("DB_USER"),
 		os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 
-	db, err = sql.Open("postgres", psqlInfo)
+	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		log.Println(err)
 		return nil, fmt.Errorf("error connecting to database: %w", err)

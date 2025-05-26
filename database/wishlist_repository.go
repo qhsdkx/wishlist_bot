@@ -35,7 +35,7 @@ func (r *WishlistRepository) Save(w *Wish) error {
 	query := `INSERT INTO wishes (wish_text, user_id) VALUES ($1, $2)`
 	err := r.DB.QueryRow(query, &w.WishText, &w.UserID)
 	if err != nil {
-		return fmt.Errorf("error at %s", err)
+		return fmt.Errorf("error at %v", err)
 	}
 	return nil
 }
@@ -106,7 +106,7 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
 	for rows.Next() {
 		errIn := rows.Scan(&w.ID, &w.WishText, &w.UserID)
 		if errIn != nil {
-			return nil, fmt.Errorf("Error at %s", errIn)
+			return nil, fmt.Errorf("Error at %v", errIn)
 		}
 		wishes = append(wishes, w)
 	}

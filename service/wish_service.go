@@ -37,10 +37,10 @@ func (w *WishServiceImpl) FindAllByUserId(userId int64) ([]WishDto, error) {
 	if err != nil {
 		return nil, err
 	}
-	var result []WishDto
-	for _, wish := range wishes {
+	result := make([]WishDto, len(wishes))
+	for i, wish := range wishes {
 		dto := mapWishToWishDto(&wish)
-		result = append(result, *dto)
+		result[i] = *dto
 	}
 	return result, nil
 }

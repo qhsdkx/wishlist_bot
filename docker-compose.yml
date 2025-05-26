@@ -1,4 +1,4 @@
-services:
+ services:
   wishlist-bot:
     build:
       context: .
@@ -15,9 +15,6 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: wishlist
       POSTGRES_DB: postgres
-      PGDATA: /var/lib/postgresql/data/pgdata
     ports:
       - "5432:5432"
-    volumes:
-      - ./pgdata:/var/lib/postgresql/data/pgdata
     restart: unless-stopped
