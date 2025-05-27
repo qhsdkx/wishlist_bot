@@ -71,7 +71,7 @@ func (ur *UserRepositoryImpl) FindById(ID int64) (User, error) {
 	for rows.Next() {
 		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
 		if errIn != nil {
-			fmt.Errorf("error at %s", errIn)
+			return User{}, fmt.Errorf("error at %s", errIn)
 		}
 	}
 	return u, nil
@@ -90,7 +90,7 @@ func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 		WHERE u.deleted_at IS NULL
 		AND CASE WHEN $1 != 'N' THEN u.status = $1 ELSE TRUE END;
 	`
-	var users []User
+	users := make([]User, 20)
 	rows, err := ur.DB.Query(query, status)
 	if err != nil {
 		return nil, fmt.Errorf("error at %s", err)
@@ -110,7 +110,7 @@ func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 }
 
 func (ur *UserRepositoryImpl) FindAll(page, perPage int) ([]User, error) {
-	var users []User
+	users := make([]User, perPage)
 
 	query := `SELECT 
     	u.id as id,
@@ -171,7 +171,7 @@ func (ur *UserRepositoryImpl) UpdateName(name string, ID int64) error {
 
 func (ur *UserRepositoryImpl) UpdateSurname(surname string, ID int64) error {
 	query := `UPDATE users
-SET
+	SET
     surname = $1,
     updated_at = now()
     WHERE deleted_at IS NULL
@@ -274,7 +274,7 @@ func (ur *UserRepositoryImpl) GetCount() (int, error) {
 	query := `SELECT COUNT(*) FROM users WHERE status = $1`
 	rows, err := ur.DB.Query(query, constants.REGISTERED)
 	if err != nil {
-		fmt.Errorf("error at %s", err)
+		return 0, fmt.Errorf("error at %s", err)
 	}
 
 	defer rows.Close()

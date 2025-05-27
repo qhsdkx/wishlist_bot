@@ -1,10 +1,10 @@
 package bot
 
 import (
-	"fmt"
-	"gopkg.in/telebot.v4"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
+
+	"gopkg.in/telebot.v4"
 )
 
 func updateUserListPage(c telebot.Context, page int, userService sv.UserService) error {
@@ -16,14 +16,7 @@ func updateUserListPage(c telebot.Context, page int, userService sv.UserService)
 	}
 
 	markup := createUserListMarkup(users, pagination)
-	_, err = bot.Edit(c.Message(), "Список пользователей:", markup)
-	if err != nil {
-		return c.Respond(&telebot.CallbackResponse{
-			Text: "Ошибка обновления",
-		})
-	}
-
-	return c.Respond()
+	return c.Edit(c.Message(), "Список пользователей:\n", markup)
 }
 
 func createBackButton() *telebot.ReplyMarkup {
@@ -37,7 +30,7 @@ func checkSheluvssic() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(c telebot.Context) error {
 			if c.Chat().ID == 420845081 {
-				return c.Send(fmt.Sprintf("@sheluvssic ловит бээээээээу в свой вазилиновый сракатан\nБББББББЭЭЭЭЭЭЭЭЭЭЭУУУУУУУУУУУУУУУУУ\n\n**СТРИПКЛУБ БЛЭКЛИСТ ПАЦАНЧИКИ**"))
+				return c.Send("@sheluvssic ловит бээээээээу в свой вазилиновый сракатан\nБББББББЭЭЭЭЭЭЭЭЭЭЭУУУУУУУУУУУУУУУУУ\n\nСТРИПКЛУБ БЛЭКЛИСТ ПАЦАНЧИКИ")
 			}
 			return next(c)
 		}

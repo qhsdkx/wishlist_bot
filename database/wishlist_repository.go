@@ -87,7 +87,7 @@ func (r *WishlistRepository) FindById(ID int64) (Wish, error) {
 }
 
 func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
-	var wishes []Wish
+	wishes := make([]Wish, 15)
 	query := `
 	SELECT
 		w.id as id,
@@ -104,9 +104,9 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
 	}
 	defer rows.Close()
 	for rows.Next() {
-		errIn := rows.Scan(&w.ID, &w.WishText, &w.UserID)
-		if errIn != nil {
-			return nil, fmt.Errorf("Error at %v", errIn)
+		err = rows.Scan(&w.ID, &w.WishText, &w.UserID)
+		if err != nil {
+			return nil, fmt.Errorf("error at %v", err)
 		}
 		wishes = append(wishes, w)
 	}

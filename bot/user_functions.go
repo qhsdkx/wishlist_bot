@@ -2,12 +2,13 @@ package bot
 
 import (
 	"fmt"
-	"gopkg.in/telebot.v4"
 	"strconv"
 	"strings"
 	"time"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
+
+	"gopkg.in/telebot.v4"
 )
 
 var states = make(map[int64]string)
@@ -264,7 +265,7 @@ func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService
 	}
 
 	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("День рождения у пользователя: %s", user.Birthdate.Format("02.01.2006")))
+	msg.WriteString(fmt.Sprintf("День рождения у пользователя: %s\n", user.Birthdate.Format("02.01.2006")))
 	msg.WriteString("🎁 Список желаний:\n\n")
 	for _, wish := range wishes {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))

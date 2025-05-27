@@ -57,10 +57,10 @@ func (us *UserServiceImpl) FindAllRegistered() ([]UserDto, error) {
 	if err != nil {
 		return nil, err
 	}
-	var userDtos []UserDto
-	for _, user := range users {
+	userDtos := make([]UserDto, len(users))
+	for i, user := range users {
 		dto := mapUserToDto(&user)
-		userDtos = append(userDtos, *dto)
+		userDtos[i] = *dto
 	}
 	return userDtos, nil
 }
@@ -71,10 +71,10 @@ func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, er
 	if err != nil {
 		return nil, nil, err
 	}
-	var userDtos []UserDto
-	for _, user := range users {
+	userDtos := make([]UserDto, len(users))
+	for i, user := range users {
 		dto := mapUserToDto(&user)
-		userDtos = append(userDtos, *dto)
+		userDtos[i] = *dto
 	}
 
 	total, err := s.Repo.GetCount()
@@ -93,10 +93,10 @@ func (s *UserServiceImpl) FindAllUnregistered() ([]UserDto, error) {
 	if err != nil {
 		return nil, err
 	}
-	var userDtos []UserDto
-	for _, user := range users {
+	userDtos := make([]UserDto, len(users))
+	for i, user := range users {
 		dto := mapUserToDto(&user)
-		userDtos = append(userDtos, *dto)
+		userDtos[i] = *dto
 	}
 	return userDtos, nil
 }
