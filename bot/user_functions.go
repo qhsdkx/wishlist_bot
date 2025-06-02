@@ -228,7 +228,7 @@ func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebo
 
 	for _, user := range users {
 		btn := markup.Data(
-			fmt.Sprintf("%s %s", user.Name, user.Surname),
+			fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
 			constants.USER_DATA_PREFIX+strconv.FormatInt(user.ID, 10),
 		)
 		rows = append(rows, markup.Row(btn))
@@ -265,8 +265,8 @@ func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService
 	}
 
 	var msg strings.Builder
-	msg.WriteString(fmt.Sprintf("День рождения у пользователя: %s\n", user.Birthdate.Format("02.01.2006")))
-	msg.WriteString("🎁 Список желаний:\n\n")
+	msg.WriteString(fmt.Sprintf("День рождения у пользователя: %s", user.Birthdate.Format("02.01.2006")))
+	msg.WriteString("\n🎁 Список желаний:\n\n")
 	for _, wish := range wishes {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))
 	}
