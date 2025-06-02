@@ -87,7 +87,7 @@ func (r *WishlistRepository) FindById(ID int64) (Wish, error) {
 }
 
 func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
-	wishes := make([]Wish, 15)
+	var wishes []Wish
 	query := `
 	SELECT
 		w.id as id,
