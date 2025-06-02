@@ -2,10 +2,11 @@ package bot
 
 import (
 	"fmt"
-	"gopkg.in/telebot.v4"
 	"strings"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
+
+	"gopkg.in/telebot.v4"
 )
 
 func onButtonDeleteWish(c telebot.Context) error {

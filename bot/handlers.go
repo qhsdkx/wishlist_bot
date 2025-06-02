@@ -2,12 +2,13 @@ package bot
 
 import (
 	"fmt"
-	"gopkg.in/telebot.v4"
 	"os"
 	"strconv"
 	"strings"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
+
+	"gopkg.in/telebot.v4"
 )
 
 func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
@@ -175,6 +176,9 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		users, err := userService.FindAllUnregistered()
 		if err != nil {
 			return c.Send("Ошибка при извлечении пользователей")
+		}
+		if users == nil {
+			return c.Send("Незарегистрированных пользователей нет!")
 		}
 		var builder strings.Builder
 		builder.WriteString(fmt.Sprintf("Юзеры, которые не прошли полную регистрацию: \n\n"))

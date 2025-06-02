@@ -157,7 +157,7 @@ func onAwaitingBirthdate(c telebot.Context, service sv.UserService) error {
 
 func onAwaitingName(c telebot.Context, service sv.UserService) error {
 	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
-		return c.Send(fmt.Sprintf("Вероятно, вы ввели имя и фамилию сразу.\nВведите пожалуйста только имя"))
+		return c.Send(fmt.Print("Вероятно, вы ввели имя и фамилию сразу.\nВведите пожалуйста только имя"))
 	}
 	if err := service.UpdateName(c.Text(), c.Chat().ID); err == nil {
 		states[c.Chat().ID] = constants.AWAITING_SURNAME
@@ -168,7 +168,7 @@ func onAwaitingName(c telebot.Context, service sv.UserService) error {
 
 func onAwaitingSurname(c telebot.Context, service sv.UserService) error {
 	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
-		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию"))
+		return c.Send(fmt.Print("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию"))
 	}
 	if err := service.UpdateSurname(c.Text(), c.Chat().ID); err == nil {
 		errUpdate := service.UpdateStatus(constants.REGISTERED, c.Chat().ID)
