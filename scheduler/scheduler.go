@@ -2,8 +2,6 @@ package scheduler
 
 import (
 	"fmt"
-	"github.com/go-co-op/gocron"
-	"gopkg.in/telebot.v4"
 	"log"
 	"os"
 	"strconv"
@@ -11,7 +9,10 @@ import (
 	"time"
 	constants "wishlist-bot/constant"
 	sv "wishlist-bot/service"
-)
+
+	"github.com/go-co-op/gocron"
+	"gopkg.in/telebot.v4"
+) //todo make notification in week before, not in monday
 
 func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 	location, _ := time.LoadLocation(constants.LOCATION)
