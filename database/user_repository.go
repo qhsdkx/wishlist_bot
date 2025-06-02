@@ -110,7 +110,7 @@ func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 }
 
 func (ur *UserRepositoryImpl) FindAll(page, perPage int) ([]User, error) {
-	users := make([]User, perPage)
+	var users []User
 
 	query := `SELECT 
     	u.id as id,

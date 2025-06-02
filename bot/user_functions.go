@@ -192,7 +192,7 @@ func onDeleteMe(c telebot.Context, service sv.UserService) error {
 func handleUserList(c telebot.Context, userService sv.UserService) error {
 	err := userService.CheckIfRegistered(c.Chat().ID)
 	if err != nil {
-		_, err = bot.Edit(c.Message(), "Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", menu)
+		err = c.Edit(c.Message(), "Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", menu)
 		return err
 	}
 	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE)

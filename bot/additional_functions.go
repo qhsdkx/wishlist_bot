@@ -16,7 +16,7 @@ func updateUserListPage(c telebot.Context, page int, userService sv.UserService)
 	}
 
 	markup := createUserListMarkup(users, pagination)
-	return c.Edit(c.Message(), "Список пользователей:\n", markup)
+	return c.Edit("Список пользователей:\n", markup)
 }
 
 func createBackButton() *telebot.ReplyMarkup {
