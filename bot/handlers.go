@@ -11,6 +11,7 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
+// todo make all transfer of data with Context!!!
 func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
 		exists := userService.ExistsById(c.Chat().ID)
@@ -21,13 +22,13 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР\n\n"+
 					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных нажмите \"Регистрация\"", menu)
 			}
-			return c.Send(fmt.Sprintf("Ошибка сохранения ваших данных. Напишите @qhsdkx %+v", saved))
+			return c.Send(fmt.Sprintf("Ошибка сохранения ваших данных. Напишите @qhsdkx. Ошибка -  %+v", saved))
 		}
 		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)
 	})
 
 	bot.Handle(constants.ON_HELP, func(c telebot.Context) error {
-		return c.Send("Это бот для работников ЦЦР. Сюда вы можете внести данные о своих пожелниях на день рождения для своих коллег")
+		return onButtonHelp(c)
 	}, checkSheluvssic())
 
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
@@ -47,7 +48,7 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.BTN_WISHLIST:
 			return onButtonWishlist(c, userService)
 		case constants.BTN_ALL_USERS:
-			return handleUserList(c, userService)
+			return handleUserList(c, userService, constants.SHOW_USERS)
 		case constants.BTN_PREV:
 			return onButtonPrev(c)
 		case constants.BTN_DELETE_ME:
@@ -63,25 +64,31 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 		case constants.BTN_EDIT_USERNAME:
 			return onEditUserName(c)
 		case constants.BTN_PREV_PAGE + "|" + page:
-			return onButtonPrevAndBack(c, userService)
+			return onButtonPrevAndBack(c, userService, constants.SHOW_USERS)
 		case constants.BTN_NEXT_PAGE + "|" + page:
-			return onButtonPrevAndBack(c, userService)
+			return onButtonPrevAndBack(c, userService, constants.SHOW_USERS)
 		case constants.USER_DATA_PREFIX + id:
 			return onUserData(c, wishlistService, userService)
 		case constants.BACK_TO_LIST:
-			return handleUserList(c, userService)
+			return handleUserList(c, userService, constants.SHOW_USERS)
 		case constants.BTN_SHOW_ALL_WISHLIST:
 			return onShowWishlist(c, wishlistService)
 		case constants.BTN_REGISTER_WISHLIST:
 			return onButtonRegWishList(c)
 		case constants.DELETE_WISH:
 			return onButtonDeleteWish(c)
+		case constants.SEND_MESSAGE_ADMIN + "_" + id:
+			return onChooseUser(c, id)
 		}
 		return c.Respond()
 	}, checkSheluvssic())
 
 	bot.Handle(telebot.OnText, func(c telebot.Context) error {
 		userState, exists := states[c.Chat().ID]
+		var id string
+		if strings.Contains(userState, "_") {
+			id = strings.Split(userState, "_")[1]
+		}
 		if !exists {
 			return c.Send("Пожалуйста, начните с команды /start")
 		}
@@ -107,6 +114,8 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			return onAwaitingWishlist(c, wishlistService)
 		case constants.DELETE_WISH:
 			return onDeleteWish(c, wishlistService)
+		case constants.SEND_MESSAGE_ADMIN + "_" + id:
+			return onSendMessage(c)
 		default:
 			return onError(c)
 		}
@@ -186,6 +195,14 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			builder.WriteString(fmt.Sprintf("- (%s) %s %s %s\n", user.Username, user.Name, user.Surname, user.Birthdate.Format("02.01.2006")))
 		}
 		return c.Send(builder.String())
+	})
+
+	bot.Handle(constants.SEND_MESSAGE_ADMIN, func(c telebot.Context) error {
+		id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+		if c.Chat().ID != id {
+			return c.Send("Ты не админ, нельзя такое делать!!!")
+		}
+		return handleUserList(c, userService, constants.SEND_MESSAGE_ADMIN)
 	})
 
 }

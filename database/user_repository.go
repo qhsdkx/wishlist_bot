@@ -11,7 +11,7 @@ type UserRepository interface {
 	Save(user *User) error
 	FindById(id int64) (User, error)
 	FindAllTotal(status string) ([]User, error)
-	FindAll(page, perPage int) ([]User, error)
+	FindAll(page, perPage int, mode string) ([]User, error)
 	UpdateBirthdate(birthdate time.Time, ID int64) error
 	UpdateName(name string, ID int64) error
 	UpdateSurname(surname string, ID int64) error
@@ -109,7 +109,7 @@ func (ur *UserRepositoryImpl) FindAllTotal(status string) ([]User, error) {
 	return users, nil
 }
 
-func (ur *UserRepositoryImpl) FindAll(page, perPage int) ([]User, error) {
+func (ur *UserRepositoryImpl) FindAll(page, perPage int, mode string) ([]User, error) {
 	var users []User
 
 	query := `SELECT 
@@ -120,12 +120,22 @@ func (ur *UserRepositoryImpl) FindAll(page, perPage int) ([]User, error) {
 	   	u.username as username,
 	   	u.status as status
 		FROM users u
-        WHERE status = $1 
+        WHERE CASE WHEN ($1 != 'MIS') THEN u.status = $1 ELSE TRUE END
         ORDER BY name 
         LIMIT $2 OFFSET $3`
-	rows, err := ur.DB.Query(query, constants.REGISTERED, page, perPage)
-	if err != nil {
-		return nil, fmt.Errorf("error at %s", err)
+	var rows *sql.Rows
+	var err error
+	if mode == constants.SHOW_USERS {
+		rows, err = ur.DB.Query(query, constants.REGISTERED, page, perPage)
+		if err != nil {
+			return nil, fmt.Errorf("error at %s", err)
+		}
+	}
+	if mode == constants.SEND_MESSAGE_ADMIN {
+		rows, err = ur.DB.Query(query, "MIS", page, perPage)
+		if err != nil {
+			return nil, fmt.Errorf("error at %s", err)
+		}
 	}
 
 	defer rows.Close()

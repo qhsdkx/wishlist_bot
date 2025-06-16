@@ -19,7 +19,7 @@ type UserService interface {
 	Save(cRequest UserDto) error
 	FindById(ID int64) (UserDto, error)
 	FindAllRegistered() ([]UserDto, error)
-	FindAll(page, perPage int) ([]UserDto, *Pagination, error)
+	FindAll(page, perPage int, mode string) ([]UserDto, *Pagination, error)
 	FindAllUnregistered() ([]UserDto, error)
 	UpdateBirthdate(birthdate *time.Time, ID int64) error
 	UpdateName(name string, ID int64) error
@@ -65,9 +65,9 @@ func (us *UserServiceImpl) FindAllRegistered() ([]UserDto, error) {
 	return userDtos, nil
 }
 
-func (s *UserServiceImpl) FindAll(page, perPage int) ([]UserDto, *Pagination, error) {
+func (s *UserServiceImpl) FindAll(page, perPage int, mode string) ([]UserDto, *Pagination, error) {
 	offset := (page - 1) * perPage
-	users, err := s.Repo.FindAll(perPage, offset)
+	users, err := s.Repo.FindAll(perPage, offset, mode)
 	if err != nil {
 		return nil, nil, err
 	}

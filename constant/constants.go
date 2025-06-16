@@ -39,6 +39,11 @@ const (
 )
 
 const (
+	SEND_MESSAGE = "send_message"
+	SHOW_USERS   = "show_users"
+)
+
+const (
 	ON_START = "/start"
 	ON_HELP  = "/help"
 )

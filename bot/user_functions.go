@@ -189,28 +189,31 @@ func onDeleteMe(c telebot.Context, service sv.UserService) error {
 	return c.Edit("Вы и ваши пожелания были успешно удалены из базы. Для того, чтобы начать с самого начала введите /start")
 }
 
-func handleUserList(c telebot.Context, userService sv.UserService) error {
+func handleUserList(c telebot.Context, userService sv.UserService, mode string) error {
 	err := userService.CheckIfRegistered(c.Chat().ID)
 	if err != nil {
-		err = c.Edit(c.Message(), "Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", menu)
+		err = c.Edit("Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", menu)
 		return err
 	}
-	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE)
+	users, pagination, err := userService.FindAll(1, constants.USERS_PER_PAGE, mode)
 	if err != nil {
 		return c.Edit("Ошибка получения данных", menu)
 	}
 
-	markup := createUserListMarkup(users, pagination)
-	return c.Edit("Список пользователей:", markup)
+	markup := createUserListMarkup(users, pagination, mode)
+	if mode == constants.SHOW_USERS {
+		return c.Edit("Список пользователей:", markup)
+	}
+	return c.Send("Список пользователей:", markup)
 }
 
-func onButtonPrevAndBack(c telebot.Context, userService sv.UserService) error {
+func onButtonPrevAndBack(c telebot.Context, userService sv.UserService, mode string) error {
 	pageStr := strings.Split(c.Callback().Data, "|")[1]
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		return err
 	}
-	return updateUserListPage(c, page, userService)
+	return updateUserListPage(c, page, userService, mode)
 }
 
 func onUserData(c telebot.Context, wishlistService sv.WishService, userService sv.UserService) error {
@@ -222,16 +225,39 @@ func onUserData(c telebot.Context, wishlistService sv.WishService, userService s
 	return c.Respond()
 }
 
-func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination) *telebot.ReplyMarkup {
+func onChooseUser(c telebot.Context, id string) error {
+	states[c.Chat().ID] = constants.SEND_MESSAGE_ADMIN + "_" + id
+	return c.Send("Введите сообщение для данного пользователя")
+}
+
+func onSendMessage(c telebot.Context) error {
+	userId, _ := strconv.ParseInt(states[c.Chat().ID][len(constants.SEND_MESSAGE_ADMIN+"_"):], 10, 64)
+	delete(states, c.Chat().ID)
+	_, err := c.Bot().Send(telebot.ChatID(userId), c.Text())
+	return err
+}
+
+func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination, mode string) *telebot.ReplyMarkup {
 	markup := &telebot.ReplyMarkup{}
 	rows := make([]telebot.Row, 0, len(users)+3)
 
-	for _, user := range users {
-		btn := markup.Data(
-			fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
-			constants.USER_DATA_PREFIX+strconv.FormatInt(user.ID, 10),
-		)
-		rows = append(rows, markup.Row(btn))
+	if mode == constants.SHOW_USERS {
+		for _, user := range users {
+			btn := markup.Data(
+				fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
+				constants.USER_DATA_PREFIX+strconv.FormatInt(user.ID, 10),
+			)
+			rows = append(rows, markup.Row(btn))
+		}
+	}
+	if mode == constants.SEND_MESSAGE_ADMIN {
+		for _, user := range users {
+			btn := markup.Data(
+				fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
+				constants.SEND_MESSAGE_ADMIN+"_"+strconv.FormatInt(user.ID, 10),
+			)
+			rows = append(rows, markup.Row(btn))
+		}
 	}
 
 	if pagination.TotalPages > 1 {

@@ -7,16 +7,19 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-func updateUserListPage(c telebot.Context, page int, userService sv.UserService) error {
-	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE)
+func updateUserListPage(c telebot.Context, page int, userService sv.UserService, mode string) error {
+	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE, mode)
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка обновления списка",
 		})
 	}
 
-	markup := createUserListMarkup(users, pagination)
-	return c.Edit("Список пользователей:\n", markup)
+	markup := createUserListMarkup(users, pagination, mode)
+	if mode == constants.SHOW_USERS {
+		return c.Edit("Список пользователей:\n", markup)
+	}
+	return c.Send("Список пользователей:\n", markup)
 }
 
 func createBackButton() *telebot.ReplyMarkup {
