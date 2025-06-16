@@ -56,7 +56,7 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 
 	if len(birthdayTomorrow) > 0 {
 		for _, other := range others {
-			_, err := bot.Send(telebot.ChatID(other.ID), response)
+			_, err = bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
@@ -79,7 +79,7 @@ func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
 
 	if len(birthdayInWeek) > 0 {
 		for _, other := range others {
-			_, err := bot.Send(telebot.ChatID(other.ID), response)
+			_, err = bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}

@@ -227,14 +227,17 @@ func onUserData(c telebot.Context, wishlistService sv.WishService, userService s
 
 func onChooseUser(c telebot.Context, id string) error {
 	states[c.Chat().ID] = constants.SEND_MESSAGE_ADMIN + "_" + id
-	return c.Send("Введите сообщение для данного пользователя")
+	return c.Edit("Введите сообщение для данного пользователя")
 }
 
 func onSendMessage(c telebot.Context) error {
 	userId, _ := strconv.ParseInt(states[c.Chat().ID][len(constants.SEND_MESSAGE_ADMIN+"_"):], 10, 64)
 	delete(states, c.Chat().ID)
 	_, err := c.Bot().Send(telebot.ChatID(userId), c.Text())
-	return err
+	if err != nil {
+		return c.Send("Ошибка ", err)
+	}
+	return c.Send("Sent successfully!")
 }
 
 func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination, mode string) *telebot.ReplyMarkup {
