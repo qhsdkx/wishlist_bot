@@ -29,8 +29,8 @@ func createBackButton() *telebot.ReplyMarkup {
 func checkSheluvssic() telebot.MiddlewareFunc {
 	return func(next telebot.HandlerFunc) telebot.HandlerFunc {
 		return func(c telebot.Context) error {
-			if c.Chat().ID == 420845081 {
-				return c.Send("@sheluvssic ловит бээээээээу в свой вазилиновый сракатан\nБББББББЭЭЭЭЭЭЭЭЭЭЭУУУУУУУУУУУУУУУУУ\n\nСТРИПКЛУБ БЛЭКЛИСТ ПАЦАНЧИКИ")
+			if c.Chat().ID == 420845081 || c.Chat().ID == 6466693361 {
+				return c.Send("@sheluvssic и его фейк ловит бээээээээу в свой вазилиновый сракатан\nБББББББЭЭЭЭЭЭЭЭЭЭЭУУУУУУУУУУУУУУУУУ\n\nСТРИПКЛУБ БЛЭКЛИСТ ПАЦАНЧИКИ")
 			}
 			return next(c)
 		}
