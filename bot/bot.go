@@ -11,8 +11,6 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-var bot *telebot.Bot
-
 func newBot() (*telebot.Bot, error) {
 	err := godotenv.Load(".env")
 	if err != nil {
@@ -22,7 +20,7 @@ func newBot() (*telebot.Bot, error) {
 		Token:  os.Getenv("API_KEY"),
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
-	bot, err = telebot.NewBot(pref)
+	bot, err := telebot.NewBot(pref)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err

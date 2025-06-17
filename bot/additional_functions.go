@@ -19,7 +19,7 @@ func updateUserListPage(c telebot.Context, page int, userService sv.UserService,
 	if mode == constants.SHOW_USERS {
 		return c.Edit("Список пользователей:\n", markup)
 	}
-	return c.Send("Список пользователей:\n", markup)
+	return c.Edit("Список пользователей:\n", markup)
 }
 
 func createBackButton() *telebot.ReplyMarkup {

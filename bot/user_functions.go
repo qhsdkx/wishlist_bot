@@ -30,7 +30,7 @@ func onButtonMyData(c telebot.Context, service sv.UserService) error {
 
 	}
 	response.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию, пока что в базе лишь ваши никнейм и имя, предоставленные телеграммом\n\nИмя: %s \nникнейм: %s", user.Name, user.Username))
-	if _, err = bot.Edit(c.Message(), response.String(), menu); err != nil {
+	if _, err = c.Bot().Edit(c.Message(), response.String(), menu); err != nil {
 		return c.Edit(fmt.Sprintf("Непредвиденная ошибка %v", err), menu)
 	}
 	return c.Respond()
@@ -129,7 +129,7 @@ func onButtonHelp(c telebot.Context) error {
 	response.WriteString(fmt.Sprintf("• \"Показать всех пользователей\" - показывает всех ЗАРЕГИСТРИРОВАННЫХ пользователей и доступна только для них. По нажатию на кнопку с именем покажется день рождения человека и его пожелания\n"))
 	response.WriteString(fmt.Sprintf("• \"Удалить меня в базе\" - полностью удаляет вас в базе. Далее необходимо следовать инструкции\n\n"))
 	response.WriteString(fmt.Sprintf("Это было кратко описание основных возможностей бота. Так как обратной связи пока нет, то в случае возникающих проблем или предложений пишите разработчику @qhsdkx"))
-	if _, err := bot.Edit(c.Message(), response.String(), menu); err != nil {
+	if _, err := c.Bot().Edit(c.Message(), response.String(), menu); err != nil {
 		return err
 	}
 	return nil
@@ -137,7 +137,7 @@ func onButtonHelp(c telebot.Context) error {
 
 func onButtonPrev(c telebot.Context) error {
 	delete(states, c.Chat().ID)
-	if _, err := bot.Edit(c.Message(), "Возвращаем вас в начало", menu); err != nil {
+	if _, err := c.Bot().Edit(c.Message(), "Возвращаем вас в начало", menu); err != nil {
 		return c.Edit("Непредвиденная ошибка. В начало", menu)
 	}
 	return nil
@@ -266,12 +266,12 @@ func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination, mode st
 	if pagination.TotalPages > 1 {
 		var paginationRow []telebot.Btn
 		if pagination.CurrentPage > 1 {
-			prevBtn := markup.Data("⬅", constants.BTN_PREV_PAGE, strconv.Itoa(pagination.CurrentPage-1))
+			prevBtn := markup.Data("⬅", constants.BTN_PREV_PAGE, strconv.Itoa(pagination.CurrentPage-1), mode)
 			paginationRow = append(paginationRow, prevBtn)
 		}
 
 		if pagination.CurrentPage < pagination.TotalPages {
-			nextBtn := markup.Data("➡", constants.BTN_NEXT_PAGE, strconv.Itoa(pagination.CurrentPage+1))
+			nextBtn := markup.Data("➡", constants.BTN_NEXT_PAGE, strconv.Itoa(pagination.CurrentPage+1), mode)
 			paginationRow = append(paginationRow, nextBtn)
 		}
 
@@ -300,7 +300,7 @@ func showUserDetails(c telebot.Context, userId int64, wishService sv.WishService
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))
 	}
 
-	_, err = bot.Edit(c.Message(), msg.String(), createBackButton())
+	_, err = c.Bot().Edit(c.Message(), msg.String(), createBackButton())
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка отображения данных",

@@ -35,7 +35,7 @@ func onShowWishlist(c telebot.Context, service sv.WishService) error {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))
 	}
 
-	_, err = bot.Edit(c.Message(), msg.String(), onlyBack)
+	_, err = c.Bot().Edit(c.Message(), msg.String(), onlyBack)
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка отображения данных",

@@ -32,13 +32,14 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 	}, checkSheluvssic())
 
 	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
-		var page, id string
+		var page, id, mode string
 		callback := c.Callback().Data[1:]
 		if strings.Contains(callback, "_") {
 			id = strings.Split(callback, "_")[1]
 		}
 		if strings.Contains(callback, "|") {
 			page = strings.Split(callback, "|")[1]
+			mode = strings.Split(callback, "|")[2]
 		}
 		switch callback {
 		case constants.BTN_REGISTER:
@@ -63,10 +64,10 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			return onEditBirthdate(c)
 		case constants.BTN_EDIT_USERNAME:
 			return onEditUserName(c)
-		case constants.BTN_PREV_PAGE + "|" + page:
-			return onButtonPrevAndBack(c, userService, constants.SHOW_USERS)
-		case constants.BTN_NEXT_PAGE + "|" + page:
-			return onButtonPrevAndBack(c, userService, constants.SHOW_USERS)
+		case constants.BTN_PREV_PAGE + "|" + page + "|" + mode:
+			return onButtonPrevAndBack(c, userService, mode)
+		case constants.BTN_NEXT_PAGE + "|" + page + "|" + mode:
+			return onButtonPrevAndBack(c, userService, mode)
 		case constants.USER_DATA_PREFIX + id:
 			return onUserData(c, wishlistService, userService)
 		case constants.BACK_TO_LIST:
