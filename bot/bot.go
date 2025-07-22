@@ -25,7 +25,8 @@ func newBot() (*telebot.Bot, error) {
 		log.Fatal(err)
 		return nil, err
 	}
-
+	ctx := telebot.NewContext(bot, <-bot.Updates)
+	_ = ctx //TODO make this data transfer between functions with context, no bot var
 	return bot, nil
 }
 
