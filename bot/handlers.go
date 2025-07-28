@@ -11,8 +11,6 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-// TODO somewhere here there is an out of range error. fix it
-// TODO  make all transfer of data with Context!!!
 func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
 		exists := userService.ExistsById(c.Chat().ID)
@@ -39,8 +37,11 @@ func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService
 			id = strings.Split(callback, "_")[1]
 		}
 		if strings.Contains(callback, "|") {
+			splitted := strings.Split(callback, "|")
 			page = strings.Split(callback, "|")[1]
-			mode = strings.Split(callback, "|")[2]
+			if len(splitted) > 1 {
+				mode = strings.Split(callback, "|")[2]
+			}
 		}
 		switch callback {
 		case constants.BTN_REGISTER:
