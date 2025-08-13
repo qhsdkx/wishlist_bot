@@ -19,7 +19,7 @@ func Start() {
 	userService := service.NewUserService(userRepository)
 	bot := b.SetUp(userService, wishlistService)
 	go func() {
-		scheduler.StartScheduler(bot, userService)
+		scheduler.StartScheduler(bot, userService, wishlistService)
 	}()
 	bot.Start()
 	select {}

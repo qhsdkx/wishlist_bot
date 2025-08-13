@@ -12,6 +12,7 @@ type WishService interface {
 	SaveAll(wishList []WishDto) error
 	FindAllByUserId(userId int64) ([]WishDto, error)
 	Delete(s string, userID int64) error
+	DeleteAll(userID int64) error
 }
 
 type WishServiceImpl struct {
@@ -52,4 +53,8 @@ func (w *WishServiceImpl) Update(uRequest WishDto) error {
 
 func (w *WishServiceImpl) Delete(s string, userID int64) error {
 	return w.Repository.Delete(s, userID)
+}
+
+func (w *WishServiceImpl) DeleteAll(userID int64) error {
+	return w.Repository.DeleteAll(userID)
 }

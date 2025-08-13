@@ -14,6 +14,7 @@ type WRepository interface {
 	FindById(id int64) (Wish, error)
 	FindAllByUserId(userId int64) ([]Wish, error)
 	Delete(s string, userID int64) error
+	DeleteAll(userID int64) error
 }
 
 type WishlistRepository struct {
@@ -118,6 +119,15 @@ func (r *WishlistRepository) Delete(s string, userID int64) error {
 	_, err := r.DB.Exec(query, &s, &userID)
 	if err != nil {
 		return fmt.Errorf("error at %s", err)
+	}
+	return nil
+}
+
+func (r *WishlistRepository) DeleteAll(userID int64) error {
+	query := `DELETE FROM wishes WHERE user_id = $2`
+	_, err := r.DB.Exec(query, &userID)
+	if err != nil {
+		return errors.New("something went wrong with SQL")
 	}
 	return nil
 }

@@ -121,7 +121,7 @@ func onButtonRegister(c telebot.Context, service sv.UserService) error {
 func onButtonHelp(c telebot.Context) error {
 	response := strings.Builder{}
 	response.WriteString(fmt.Sprintf("Данная система была создана с целью помощи работникам ЦЦР (пока что 9-го департамента) следить за днями рождения коллег\n"))
-	response.WriteString(fmt.Sprintf("\bВНИМАНИЕ.\b ВСЕ предусмотренные уведомления приходят только в случае полной регистрации пользоваетеля по кнопке \"Регистрация\"\n"))
+	response.WriteString(fmt.Sprintf("ВНИМАНИЕ. ВСЕ предусмотренные уведомления приходят только в случае полной регистрации пользоваетеля по кнопке \"Регистрация\"\n"))
 	response.WriteString(fmt.Sprintf("Короткая информация по возможностям бота:\n\n"))
 	response.WriteString(fmt.Sprintf("• \"Редактировать мои данные\" - кнопка, представляющая возможность изменения введенных при регистрации данных. соответственно доступна только зарегистрированным\n"))
 	response.WriteString(fmt.Sprintf("• \"Список желаний\" - дает возможность ввести ваши пожелания, удалить что-то либо посмотреть пожелания других\n"))

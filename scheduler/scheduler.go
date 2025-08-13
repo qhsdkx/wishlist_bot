@@ -14,7 +14,7 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
+func StartScheduler(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
 	location, _ := time.LoadLocation(constants.LOCATION)
 	s := gocron.NewScheduler(location)
 
@@ -28,6 +28,8 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 		scheduleTimeWeekly = "9:55"
 	}
 
+	scheuduleTimeToDelete := "23:50"
+
 	_, err := s.Every(1).Days().At(scheduleTime).Do(sendDailyNotifications, bot, userService)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
@@ -37,6 +39,8 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService) {
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
+
+	_, err = s.Every(1).Days().At(scheuduleTimeToDelete).Do(deleteWishes, bot, userService, wishlistService)
 
 	s.StartAsync()
 }
@@ -84,6 +88,25 @@ func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 
+		}
+	}
+}
+
+func deleteWishes(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
+	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
+	users, err := userService.FindAllRegistered()
+	if err != nil {
+		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		if sendErr != nil {
+			log.Printf("Error sending daily notifications: %v", sendErr)
+		}
+	}
+
+	birthdayTomorrow, _ := splitUsersByBirthday(users, 0)
+
+	if len(birthdayTomorrow) > 0 {
+		for _, bd := range birthdayTomorrow {
+			wishlistService.DeleteAll(bd.ID)
 		}
 	}
 }
