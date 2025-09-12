@@ -11,15 +11,16 @@ import (
 func Start() {
 	db, dbErr := database.Init()
 	if dbErr != nil {
-		fmt.Errorf("Error initializing database: %v", dbErr)
+		fmt.Printf("Error initializing database: %v", dbErr)
 	}
 	wishlistRepository := database.NewWishlistRepository(db)
 	wishlistService := service.NewWishService(wishlistRepository)
 	userRepository := database.NewUserRepository(db)
 	userService := service.NewUserService(userRepository)
 	bot := b.SetUp(userService, wishlistService)
+	scheduler := scheduler.NewScheduler(bot, userService, wishlistService)
 	go func() {
-		scheduler.StartScheduler(bot, userService, wishlistService)
+		scheduler.StartScheduler()
 	}()
 	bot.Start()
 	select {}

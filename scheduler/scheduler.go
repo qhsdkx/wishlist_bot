@@ -14,7 +14,21 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-func StartScheduler(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
+type Scheduler struct {
+	bot *telebot.Bot
+	us  sv.UserService
+	ws  sv.WishService
+}
+
+func NewScheduler(bot *telebot.Bot, us sv.UserService, ws sv.WishService) *Scheduler {
+	return &Scheduler{
+		bot: bot,
+		us:  us,
+		ws:  ws,
+	}
+}
+
+func (sch *Scheduler) StartScheduler() {
 	location, _ := time.LoadLocation(constants.LOCATION)
 	s := gocron.NewScheduler(location)
 
@@ -28,28 +42,26 @@ func StartScheduler(bot *telebot.Bot, userService sv.UserService, wishlistServic
 		scheduleTimeWeekly = "9:55"
 	}
 
-	scheuduleTimeToDelete := "23:50"
-
-	_, err := s.Every(1).Days().At(scheduleTime).Do(sendDailyNotifications, bot, userService)
+	_, err := s.Every(1).Days().At(scheduleTime).Do(sch.sendDailyNotifications)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
 
-	_, err = s.Every(1).Monday().At(scheduleTimeWeekly).Do(sendWeeklyNotifications, bot, userService)
+	_, err = s.Every(1).Days().At(scheduleTimeWeekly).Do(sch.sendWeeklyNotifications)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
 
-	_, err = s.Every(1).Days().At(scheuduleTimeToDelete).Do(deleteWishes, bot, userService, wishlistService)
+	_, err = s.Every(1).Days().At("23:50").Do(sch.deleteWishes)
 
 	s.StartAsync()
 }
 
-func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
+func (sch *Scheduler) sendDailyNotifications() {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
-	users, err := userService.FindAllRegistered()
+	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
 		}
@@ -60,7 +72,7 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 
 	if len(birthdayTomorrow) > 0 {
 		for _, other := range others {
-			_, err = bot.Send(telebot.ChatID(other.ID), response)
+			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
@@ -68,22 +80,22 @@ func sendDailyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	}
 }
 
-func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
+func (sch *Scheduler) sendWeeklyNotifications() {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
-	users, err := userService.FindAllRegistered()
+	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
 		}
 	}
 
-	birthdayInWeek, others := splitWeeklyUsersByBirthday(users)
+	birthdayInWeek, others := splitUsersByBirthday(users, 7)
 	response := makeWeeklyResponse(birthdayInWeek)
 
 	if len(birthdayInWeek) > 0 {
 		for _, other := range others {
-			_, err = bot.Send(telebot.ChatID(other.ID), response)
+			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
@@ -92,11 +104,11 @@ func sendWeeklyNotifications(bot *telebot.Bot, userService sv.UserService) {
 	}
 }
 
-func deleteWishes(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
+func (sch *Scheduler) deleteWishes() {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
-	users, err := userService.FindAllRegistered()
+	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		_, sendErr := bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
 		}
@@ -106,7 +118,7 @@ func deleteWishes(bot *telebot.Bot, userService sv.UserService, wishlistService 
 
 	if len(birthdayTomorrow) > 0 {
 		for _, bd := range birthdayTomorrow {
-			wishlistService.DeleteAll(bd.ID)
+			sch.ws.DeleteAll(bd.ID)
 		}
 	}
 }
@@ -140,27 +152,27 @@ func makeResponse(users []sv.UserDto) string {
 	return response.String()
 }
 
-func splitWeeklyUsersByBirthday(users []sv.UserDto) (birthdayInWeek []sv.UserDto, others []sv.UserDto) {
-	today := time.Now()
-	weekLater := today.AddDate(0, 0, 7)
+// func splitWeeklyUsersByBirthday(users []sv.UserDto) (birthdayInWeek []sv.UserDto, others []sv.UserDto) {
+// 	today := time.Now()
+// 	weekLater := today.AddDate(0, 0, 7)
 
-	for _, user := range users {
-		bd := user.Birthdate
-		currentYearBD := time.Date(today.Year(), bd.Month(), bd.Day(), 0, 0, 0, 0, time.UTC)
+// 	for _, user := range users {
+// 		bd := user.Birthdate
+// 		currentYearBD := time.Date(today.Year(), bd.Month(), bd.Day(), 0, 0, 0, 0, time.UTC)
 
-		if currentYearBD.Before(today) {
-			currentYearBD = currentYearBD.AddDate(1, 0, 0)
-		}
+// 		if currentYearBD.Before(today) {
+// 			currentYearBD = currentYearBD.AddDate(1, 0, 0)
+// 		}
 
-		if !currentYearBD.After(weekLater) {
-			birthdayInWeek = append(birthdayInWeek, user)
-		} else {
-			others = append(others, user)
-		}
-	}
+// 		if !currentYearBD.After(weekLater) {
+// 			birthdayInWeek = append(birthdayInWeek, user)
+// 		} else {
+// 			others = append(others, user)
+// 		}
+// 	}
 
-	return birthdayInWeek, others
-}
+// 	return birthdayInWeek, others
+// }
 
 func makeWeeklyResponse(users []sv.UserDto) string {
 	var response strings.Builder
