@@ -1,47 +1,30 @@
-package database
+package wishlist
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
 	"strconv"
-	"time"
 )
 
-type WRepository interface {
-	Save(w *Wish) error
-	SaveAll(w []*Wish) error
-	FindById(id int64) (Wish, error)
-	FindAllByUserId(userId int64) ([]Wish, error)
-	Delete(s string, userID int64) error
-	DeleteAll(userID int64) error
+type Repository struct {
+	db *sql.DB
 }
 
-type WishlistRepository struct {
-	DB *sql.DB
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{db: db}
 }
 
-func NewWishlistRepository(db *sql.DB) *WishlistRepository {
-	return &WishlistRepository{DB: db}
-}
-
-type Wish struct {
-	ID        int64     `json:"id"`
-	WishText  string    `json:"wish_text"`
-	UserID    int64     `json:"user_id"`
-	DeletedAt time.Time `json:"deleted_at"`
-}
-
-func (r *WishlistRepository) Save(w *Wish) error {
+func (r *Repository) Save(w *Wish) error {
 	query := `INSERT INTO wishes (wish_text, user_id) VALUES ($1, $2)`
-	err := r.DB.QueryRow(query, &w.WishText, &w.UserID)
+	err := r.db.QueryRow(query, &w.WishText, &w.UserID)
 	if err != nil {
 		return fmt.Errorf("error at %v", err)
 	}
 	return nil
 }
 
-func (r *WishlistRepository) SaveAll(wishes []*Wish) error {
+func (r *Repository) SaveAll(wishes []Wish) error {
 	if len(wishes) == 0 {
 		return errors.New("no wishes to save")
 	}
@@ -54,14 +37,14 @@ func (r *WishlistRepository) SaveAll(wishes []*Wish) error {
 		query += "($" + strconv.Itoa(i*2+1) + ", $" + strconv.Itoa(i*2+2) + ")"
 		values = append(values, w.WishText, w.UserID)
 	}
-	_, err := r.DB.Exec(query, values...)
+	_, err := r.db.Exec(query, values...)
 	if err != nil {
 		return fmt.Errorf("error at %s", err)
 	}
 	return nil
 }
 
-func (r *WishlistRepository) FindById(ID int64) (Wish, error) {
+func (r *Repository) FindById(ID int64) (Wish, error) {
 	query := `
 	SELECT
    	w.id as id,
@@ -73,7 +56,7 @@ func (r *WishlistRepository) FindById(ID int64) (Wish, error) {
 	AND deleted_at IS NULL
 `
 	w := Wish{}
-	rows, err := r.DB.Query(query, ID)
+	rows, err := r.db.Query(query, ID)
 	if err != nil {
 		return Wish{}, fmt.Errorf("error at %s", err)
 	}
@@ -87,7 +70,7 @@ func (r *WishlistRepository) FindById(ID int64) (Wish, error) {
 	return w, nil
 }
 
-func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
+func (r *Repository) FindAllByUserId(ID int64) ([]Wish, error) {
 	var wishes []Wish
 	query := `
 	SELECT
@@ -99,7 +82,7 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
 	AND deleted_at IS NULL
 `
 	w := Wish{}
-	rows, err := r.DB.Query(query, ID)
+	rows, err := r.db.Query(query, ID)
 	if err != nil {
 		return nil, fmt.Errorf("error at %s", err)
 	}
@@ -114,18 +97,27 @@ func (r *WishlistRepository) FindAllByUserId(ID int64) ([]Wish, error) {
 	return wishes, nil
 }
 
-func (r *WishlistRepository) Delete(s string, userID int64) error {
+func (r *Repository) Delete(s string, userID int64) error {
 	query := `DELETE FROM wishes WHERE wish_text LIKE $1 AND user_id = $2`
-	_, err := r.DB.Exec(query, &s, &userID)
+	_, err := r.db.Exec(query, &s, &userID)
 	if err != nil {
 		return fmt.Errorf("error at %s", err)
 	}
 	return nil
 }
 
-func (r *WishlistRepository) DeleteAll(userID int64) error {
-	query := `DELETE FROM wishes WHERE user_id = $2`
-	_, err := r.DB.Exec(query, &userID)
+func (r *Repository) DeleteAll(userID int64) error {
+	query := `DELETE * FROM wishes WHERE user_id = $2`
+	_, err := r.db.Exec(query, &userID)
+	if err != nil {
+		return errors.New("something went wrong with SQL")
+	}
+	return nil
+}
+
+func (r *Repository) DeleteByID(ID int64) error {
+	query := `DELETE * FROM wishes where id = $1`
+	_, err := r.db.Exec(query, &ID)
 	if err != nil {
 		return errors.New("something went wrong with SQL")
 	}

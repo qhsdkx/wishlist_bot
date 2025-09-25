@@ -5,11 +5,19 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	constants "wishlist-bot/constant"
-	sv "wishlist-bot/service"
+	constants "wishlist-bot/internal/constant"
+	sv "wishlist-bot/internal/service"
 
 	"gopkg.in/telebot.v4"
 )
+
+func (b *Bot) handleStart(c telebot.Context) error {
+	u, err := b.users.GetUser(c.Chat().ID)
+	if err != nil {
+		return c.Send("Привет! Давай зарегистрируемся?")
+	}
+	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username))
+}
 
 func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
 	bot.Handle(constants.ON_START, func(c telebot.Context) error {

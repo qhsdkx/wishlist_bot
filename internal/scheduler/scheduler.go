@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	constants "wishlist-bot/constant"
-	sv "wishlist-bot/service"
+	constants "wishlist-bot/internal/constant"
+	"wishlist-bot/internal/user"
+	"wishlist-bot/internal/wishlist"
 
 	"github.com/go-co-op/gocron"
 	"gopkg.in/telebot.v4"
@@ -16,11 +17,11 @@ import (
 
 type Scheduler struct {
 	bot *telebot.Bot
-	us  sv.UserService
-	ws  sv.WishService
+	us  user.Service
+	ws  wishlist.Service
 }
 
-func NewScheduler(bot *telebot.Bot, us sv.UserService, ws sv.WishService) *Scheduler {
+func NewScheduler(bot *telebot.Bot, us user.Service, ws wishlist.Service) *Scheduler {
 	return &Scheduler{
 		bot: bot,
 		us:  us,
@@ -123,7 +124,7 @@ func (sch *Scheduler) deleteWishes() {
 	}
 }
 
-func splitUsersByBirthday(users []sv.UserDto, daysBefore int) (birthdayTomorrow []sv.UserDto, others []sv.UserDto) {
+func splitUsersByBirthday(users []user.User, daysBefore int) (birthdayTomorrow []user.User, others []user.User) {
 	tomorrow := time.Now().AddDate(0, 0, daysBefore)
 	tomorrowMonth := tomorrow.Month()
 	tomorrowDay := tomorrow.Day()
@@ -142,7 +143,7 @@ func splitUsersByBirthday(users []sv.UserDto, daysBefore int) (birthdayTomorrow 
 	return birthdayTomorrow, others
 }
 
-func makeResponse(users []sv.UserDto) string {
+func makeResponse(users []user.User) string {
 	var response strings.Builder
 	now := time.Now().AddDate(0, 0, 1)
 	response.WriteString(fmt.Sprintf("Доброе утро!\nЗавтра (%s)  день рождения у:\n\n", now.Format("02.01.2006")))
@@ -174,7 +175,7 @@ func makeResponse(users []sv.UserDto) string {
 // 	return birthdayInWeek, others
 // }
 
-func makeWeeklyResponse(users []sv.UserDto) string {
+func makeWeeklyResponse(users []user.User) string {
 	var response strings.Builder
 	response.WriteString("Доброе утро!\nЧерез неделю будет день рождения у:\n\n")
 	for _, user := range users {

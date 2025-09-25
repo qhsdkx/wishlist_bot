@@ -5,13 +5,58 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	constants "wishlist-bot/constant"
-	sv "wishlist-bot/service"
+	constants "wishlist-bot/internal/constant"
+	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/user"
 
 	"gopkg.in/telebot.v4"
 )
 
-var states = make(map[int64]string)
+type UserHandler struct {
+	service user.Service
+	states  fsm.StateStore
+}
+
+func NewUserHandler(service user.Service, states fsm.StateStore) *UserHandler {
+	return &UserHandler{service: service, states: states}
+}
+
+func (h *UserHandler) ShowProfile(c telebot.Context) error {
+	user, err := h.service.FindByID(c.Chat().ID)
+	if err != nil {
+		return c.Edit(fmt.Sprintf("Невозможно найти юзера по ID %d", c.Chat().ID), MainMenu())
+	}
+
+	var msg strings.Builder
+	if user.Status == "REGISTERED" {
+		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
+			user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+		msg.WriteString("Кнопками ниже вы можете обновить данные")
+		return c.Edit(msg.String(), EditMenu())
+	}
+
+	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", user.Name, user.Username))
+	return c.Edit(msg.String(), MainMenu())
+}
+
+func (h *UserHandler) EditName(c telebot.Context) error {
+	h.states.Set(c.Chat().ID, "AWAITING_NEW_NAME")
+	return c.Edit("Введите новое имя")
+}
+
+func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
+	text := strings.TrimSpace(c.Text())
+	if strings.Count(text, " ") > 0 {
+		return c.Send("Введите только имя, без фамилии")
+	}
+
+	if err := h.service.UpdateName(text, c.Chat().ID); err != nil {
+		return c.Send("Ошибка сохранения данных", MainMenu())
+	}
+
+	h.states.Delete(c.Chat().ID)
+	return c.Send("Имя успешно обновлено", EditMenu())
+}
 
 func onButtonMyData(c telebot.Context, service sv.UserService) error {
 	user, err := service.FindById(c.Chat().ID)

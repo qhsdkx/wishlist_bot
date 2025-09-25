@@ -1,13 +1,13 @@
 package bot
 
 import (
-	constants "wishlist-bot/constant"
-	sv "wishlist-bot/service"
+	constants "wishlist-bot/internal/constant"
+	u "wishlist-bot/internal/user"
 
 	"gopkg.in/telebot.v4"
 )
 
-func updateUserListPage(c telebot.Context, page int, userService sv.UserService, mode string) error {
+func updateUserListPage(c telebot.Context, page int, userService u.Service, mode string) error {
 	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE, mode)
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{

@@ -1,4 +1,4 @@
-package service
+package user
 
 type Pagination struct {
 	CurrentPage int

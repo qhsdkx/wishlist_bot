@@ -1,6 +1,6 @@
 package main
 
-import "wishlist-bot/app"
+import "wishlist-bot/internal/app"
 
 func main() {
 	app.Start()
