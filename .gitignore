@@ -1,3 +1,2 @@
-/.env
-/.idea
+/cmd/wishlist-bot/.env
 /wishlist-bot
