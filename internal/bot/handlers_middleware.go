@@ -2,13 +2,12 @@ package bot
 
 import (
 	constants "wishlist-bot/internal/constant"
-	u "wishlist-bot/internal/user"
 
 	"gopkg.in/telebot.v4"
 )
 
-func updateUserListPage(c telebot.Context, page int, userService u.Service, mode string) error {
-	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE, mode)
+func (h *UserHandler) updateUserListPage(c telebot.Context, page int, mode string) error {
+	users, pagination, err := h.service.FindAll(page, constants.USERS_PER_PAGE, mode)
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка обновления списка",
@@ -21,6 +20,21 @@ func updateUserListPage(c telebot.Context, page int, userService u.Service, mode
 	}
 	return c.Edit("Список пользователей:\n", markup)
 }
+
+// func updateUserListPage(c telebot.Context, page int, userService u.Service, mode string) error {
+// 	users, pagination, err := userService.FindAll(page, constants.USERS_PER_PAGE, mode)
+// 	if err != nil {
+// 		return c.Respond(&telebot.CallbackResponse{
+// 			Text: "Ошибка обновления списка",
+// 		})
+// 	}
+
+// 	markup := createUserListMarkup(users, pagination, mode)
+// 	if mode == constants.SHOW_USERS {
+// 		return c.Edit("Список пользователей:\n", markup)
+// 	}
+// 	return c.Edit("Список пользователей:\n", markup)
+// }
 
 func createBackButton() *telebot.ReplyMarkup {
 	markup := &telebot.ReplyMarkup{}
@@ -40,7 +54,7 @@ func checkSheluvssic() telebot.MiddlewareFunc {
 	}
 }
 
-func onError(c telebot.Context) error {
-	delete(states, c.Chat().ID)
+func (h *UserHandler) Error(c telebot.Context) error {
+	h.states.Delete(c.Chat().ID)
 	return c.Send("Неизвестное состояние. Пожалуйста, начните заново с команды /start.")
 }

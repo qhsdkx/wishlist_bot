@@ -31,7 +31,7 @@ func Init() (*sql.DB, error) {
 	conns, _ := strconv.Atoi(os.Getenv("MAX_DB_COONECTIONS"))
 
 	db.SetMaxOpenConns(conns)
-	db.SetMaxIdleConns(5)
+	db.SetMaxIdleConns(15)
 
 	return db, db.Ping()
 }
