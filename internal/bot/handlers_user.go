@@ -382,7 +382,7 @@ func (h *UserHandler) UserList(c telebot.Context, mode string) error {
 		return c.Edit("Ошибка получения данных", MainMenu())
 	}
 
-	markup := createUserListMarkup(users, pagination, mode)
+	markup := h.createUserListMarkup(users, pagination, mode)
 	if mode == constants.SHOW_USERS {
 		return c.Edit("Список пользователей:", markup)
 	}
@@ -477,7 +477,7 @@ func (h *UserHandler) SendMessage(c telebot.Context) error {
 // 	return c.Send("Sent successfully!")
 // }
 
-func createUserListMarkup(users []sv.UserDto, pagination *sv.Pagination, mode string) *telebot.ReplyMarkup {
+func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.Pagination, mode string) *telebot.ReplyMarkup {
 	markup := &telebot.ReplyMarkup{}
 	rows := make([]telebot.Row, 0, len(users)+3)
 

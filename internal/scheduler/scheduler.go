@@ -153,28 +153,6 @@ func makeResponse(users []user.User) string {
 	return response.String()
 }
 
-// func splitWeeklyUsersByBirthday(users []sv.UserDto) (birthdayInWeek []sv.UserDto, others []sv.UserDto) {
-// 	today := time.Now()
-// 	weekLater := today.AddDate(0, 0, 7)
-
-// 	for _, user := range users {
-// 		bd := user.Birthdate
-// 		currentYearBD := time.Date(today.Year(), bd.Month(), bd.Day(), 0, 0, 0, 0, time.UTC)
-
-// 		if currentYearBD.Before(today) {
-// 			currentYearBD = currentYearBD.AddDate(1, 0, 0)
-// 		}
-
-// 		if !currentYearBD.After(weekLater) {
-// 			birthdayInWeek = append(birthdayInWeek, user)
-// 		} else {
-// 			others = append(others, user)
-// 		}
-// 	}
-
-// 	return birthdayInWeek, others
-// }
-
 func makeWeeklyResponse(users []user.User) string {
 	var response strings.Builder
 	response.WriteString("Доброе утро!\nЧерез неделю будет день рождения у:\n\n")

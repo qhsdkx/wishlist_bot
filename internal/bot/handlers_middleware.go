@@ -14,7 +14,7 @@ func (h *UserHandler) updateUserListPage(c telebot.Context, page int, mode strin
 		})
 	}
 
-	markup := createUserListMarkup(users, pagination, mode)
+	markup := h.createUserListMarkup(users, pagination, mode)
 	if mode == constants.SHOW_USERS {
 		return c.Edit("Список пользователей:\n", markup)
 	}

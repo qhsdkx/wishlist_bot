@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"strings"
 	constants "wishlist-bot/internal/constant"
-	sv "wishlist-bot/internal/service"
 
 	"gopkg.in/telebot.v4"
 )
 
-func (b *Bot) handleStart(c telebot.Context) error {
-	u, err := b.users.GetUser(c.Chat().ID)
+func (b *Bot) HandleStart(c telebot.Context) error {
+	u, err := b.users.FindByID(c.Chat().ID)
 	if err != nil {
 		return c.Send("Привет! Давай зарегистрируемся?")
 	}
