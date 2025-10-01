@@ -26,36 +26,57 @@ func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, states fsm.S
 
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	data := c.Callback().Data
+	unique := c.Callback().Unique
+	callbackData := parseCallback(unique)
 
 	switch data {
-	case "EDIT_NAME":
+	case constants.BTN_EDIT_NAME:
 		return r.userHandler.EditName(c)
-	case "EDIT_SURNAME":
+	case constants.BTN_EDIT_SURNAME:
 		return r.userHandler.EditSurname(c)
-	case "EDIT_BIRTHDATE":
+	case constants.BTN_EDIT_BIRTHDATE:
 		return r.userHandler.EditBirthdate(c)
-	case "EDIT_USERNAME":
+	case constants.BTN_EDIT_USERNAME:
 		return r.userHandler.EditUserName(c)
+	case constants.BTN_ME:
+		return r.userHandler.ShowProfile(c)
+	case constants.BTN_REGISTER:
+		return r.userHandler.Register(c)
+	case constants.BTN_HELP:
+		return r.Help(c)
+	case constants.BTN_WISHLIST:
+		return r.wishlistHandler.Show(c)
+	case constants.BTN_ALL_USERS:
+		return r.userHandler.UserList(c, callbackData.mode)
+	case constants.BTN_PREV:
+		return r.userHandler.Prev(c)
+	case constants.BTN_DELETE_ME:
+		return r.userHandler.DeleteMe(c)
+	case constants.BTN_PREV_PAGE:
+		return r.userHandler.PrevAndBack(c, callbackData.mode, callbackData.page)
+	case constants.BTN_NEXT_PAGE:
+		return r.userHandler.PrevAndBack(c, callbackData.mode, callbackData.page)
+	case constants.USER_DATA_PREFIX:
+		return r.UserData(c)
+	case constants.BACK_TO_LIST:
+		return r.userHandler.UserList(c, callbackData.mode)
 
 	// кнопки wishlist
-	case "REGISTER_WISHES":
-		return r.wishlistHandler.Register(c)
-	case "DELETE_WISH":
-		return r.wishlistHandler.Delete(c)
-	case "SHOW_WISHES":
+	case constants.BTN_SHOW_ALL_WISHLIST:
 		return r.wishlistHandler.Show(c)
-
-	case "MAIN_MENU":
-		return c.Edit("Возвращаем в главное меню", MainMenu())
+	case constants.BTN_REGISTER_WISHLIST:
+		return r.wishlistHandler.Register(c)
+	case constants.DELETE_WISH:
+		return r.wishlistHandler.Delete(c)
+	default:
+		return r.Error(c)
 	}
 
-	if strings.HasPrefix(data, "SEND_MESSAGE_ADMIN_") {
-		idStr := strings.TrimPrefix(data, "SEND_MESSAGE_ADMIN_")
-		r.states.Set(c.Chat().ID, "SEND_MESSAGE_ADMIN_"+idStr)
-		return c.Edit("Введите сообщение для данного пользователя")
-	}
-
-	return c.Respond()
+	// if strings.HasPrefix(data, "SEND_MESSAGE_ADMIN_") {
+	// 	idStr := strings.TrimPrefix(data, "SEND_MESSAGE_ADMIN_")
+	// 	r.states.Set(c.Chat().ID, "SEND_MESSAGE_ADMIN_"+idStr)
+	// 	return c.Edit("Введите сообщение для данного пользователя")
+	// }
 }
 
 func (r *HandlerRouter) OnText(c telebot.Context) error {
@@ -86,8 +107,11 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 }
 
 func (r *HandlerRouter) OnStart(c telebot.Context) error {
-	menu := MainMenu()
-	return c.Send("Привет! Выберите действие:", menu)
+	u, err := r.userHandler.service.FindByID(c.Chat().ID)
+	if err != nil || u.Status != "REGISTERED" {
+		return c.Send("Привет! Давай зарегистрируемся?", RegisterOnlyMenu())
+	}
+	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username), MainMenu())
 }
 
 func (r *HandlerRouter) UserData(c telebot.Context) error {
@@ -112,7 +136,7 @@ func (r *HandlerRouter) UserData(c telebot.Context) error {
 		msg.WriteString(fmt.Sprintf("• %s\n", wish.WishText))
 	}
 
-	_, err = c.Bot().Edit(c.Message(), msg.String(), createBackButton())
+	_, err = c.Bot().Edit(c.Message(), msg.String(), r.createBackButton())
 	if err != nil {
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка отображения данных",

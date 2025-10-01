@@ -232,23 +232,6 @@ func (h *UserHandler) Register(c telebot.Context) error {
 // 	return nil
 // }
 
-func (h *UserHandler) Help(c telebot.Context) error {
-	response := strings.Builder{}
-	response.WriteString(fmt.Sprintf("Данная система была создана с целью помощи работникам ЦЦР (пока что 9-го департамента) следить за днями рождения коллег\n"))
-	response.WriteString(fmt.Sprintf("ВНИМАНИЕ. ВСЕ предусмотренные уведомления приходят только в случае полной регистрации пользоваетеля по кнопке \"Регистрация\"\n"))
-	response.WriteString(fmt.Sprintf("Короткая информация по возможностям бота:\n\n"))
-	response.WriteString(fmt.Sprintf("• \"Редактировать мои данные\" - кнопка, представляющая возможность изменения введенных при регистрации данных. соответственно доступна только зарегистрированным\n"))
-	response.WriteString(fmt.Sprintf("• \"Список желаний\" - дает возможность ввести ваши пожелания, удалить что-то либо посмотреть пожелания других\n"))
-	response.WriteString(fmt.Sprintf("• \"Регистрация\" - необходима для регистрации вас в системе (ввод имени, фамилии и даты рождения)\n"))
-	response.WriteString(fmt.Sprintf("• \"Показать всех пользователей\" - показывает всех ЗАРЕГИСТРИРОВАННЫХ пользователей и доступна только для них. По нажатию на кнопку с именем покажется день рождения человека и его пожелания\n"))
-	response.WriteString(fmt.Sprintf("• \"Удалить меня в базе\" - полностью удаляет вас в базе. Далее необходимо следовать инструкции\n\n"))
-	response.WriteString(fmt.Sprintf("Это было кратко описание основных возможностей бота. Так как обратной связи пока нет, то в случае возникающих проблем или предложений пишите разработчику @qhsdkx"))
-	if _, err := c.Bot().Edit(c.Message(), response.String(), MainMenu()); err != nil {
-		return err
-	}
-	return nil
-}
-
 // func onButtonHelp(c telebot.Context) error {
 // 	response := strings.Builder{}
 // 	response.WriteString(fmt.Sprintf("Данная система была создана с целью помощи работникам ЦЦР (пока что 9-го департамента) следить за днями рождения коллег\n"))
@@ -407,8 +390,7 @@ func (h *UserHandler) UserList(c telebot.Context, mode string) error {
 // 	return c.Send("Список пользователей:", markup)
 // }
 
-func (h *UserHandler) PrevAndBack(c telebot.Context, mode string) error {
-	pageStr := strings.Split(c.Callback().Data, "|")[1]
+func (h *UserHandler) PrevAndBack(c telebot.Context, mode, pageStr string) error {
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
 		return err

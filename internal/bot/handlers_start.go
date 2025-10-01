@@ -10,88 +10,46 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-func (b *Bot) HandleStart(c telebot.Context) error {
-	u, err := b.users.FindByID(c.Chat().ID)
-	if err != nil {
-		return c.Send("Привет! Давай зарегистрируемся?")
-	}
-	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username))
-}
+// func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
+// 	bot.Handle(constants.ON_START, func(c telebot.Context) error {
+// 		exists := userService.ExistsById(c.Chat().ID)
+// 		if exists != nil {
+// 			userDto := sv.UserDto{ID: c.Chat().ID, Name: c.Chat().FirstName, Surname: c.Chat().LastName, Username: c.Chat().Username}
+// 			saved := userService.Save(userDto)
+// 			if saved == nil {
+// 				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР\n\n"+
+// 					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных нажмите \"Регистрация\"", menu)
+// 			}
+// 			return c.Send(fmt.Sprintf("Ошибка сохранения ваших данных. Напишите @qhsdkx. Ошибка -  %+v", saved))
+// 		}
+// 		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)
+// 	})
 
-func setUpHandlers(bot *telebot.Bot, userService sv.UserService, wishlistService sv.WishService) {
-	bot.Handle(constants.ON_START, func(c telebot.Context) error {
-		exists := userService.ExistsById(c.Chat().ID)
-		if exists != nil {
-			userDto := sv.UserDto{ID: c.Chat().ID, Name: c.Chat().FirstName, Surname: c.Chat().LastName, Username: c.Chat().Username}
-			saved := userService.Save(userDto)
-			if saved == nil {
-				return c.Send("Приветствуем, "+c.Chat().Username+". Этот бот был создан с целью внесения данных о работниках ЦЦР\n\n"+
-					"Для дополнительной информации нажмите кнопку \"Помощь\", для внесения остальных данных нажмите \"Регистрация\"", menu)
-			}
-			return c.Send(fmt.Sprintf("Ошибка сохранения ваших данных. Напишите @qhsdkx. Ошибка -  %+v", saved))
-		}
-		return c.Send("Приветствуем, "+c.Chat().Username+". Вы нажали кнопку старта. Выберите действие", menu)
-	})
-
-	bot.Handle(constants.ON_HELP, func(c telebot.Context) error {
-		return onButtonHelp(c)
-	}, checkSheluvssic())
-
-	bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
-		var page, id, mode string
-		callback := c.Callback().Data[1:]
-		if strings.Contains(callback, "_") {
-			id = strings.Split(callback, "_")[1]
-		}
-		if strings.Contains(callback, "|") {
-			splitted := strings.Split(callback, "|")
-			page = strings.Split(callback, "|")[1]
-			if len(splitted) > 1 {
-				mode = strings.Split(callback, "|")[2]
-			}
-		}
-		switch callback {
-		case constants.BTN_REGISTER:
-			return onButtonRegister(c, userService)
-		case constants.BTN_HELP:
-			return onButtonHelp(c)
-		case constants.BTN_WISHLIST:
-			return onButtonWishlist(c, userService)
-		case constants.BTN_ALL_USERS:
-			return handleUserList(c, userService, constants.SHOW_USERS)
-		case constants.BTN_PREV:
-			return onButtonPrev(c)
-		case constants.BTN_DELETE_ME:
-			return onDeleteMe(c, userService)
-		case constants.BTN_ME:
-			return onButtonMyData(c, userService)
-		case constants.BTN_EDIT_NAME:
-			return onEditName(c)
-		case constants.BTN_EDIT_SURNAME:
-			return onEditSurname(c)
-		case constants.BTN_EDIT_BIRTHDATE:
-			return onEditBirthdate(c)
-		case constants.BTN_EDIT_USERNAME:
-			return onEditUserName(c)
-		case constants.BTN_PREV_PAGE + "|" + page + "|" + mode:
-			return onButtonPrevAndBack(c, userService, mode)
-		case constants.BTN_NEXT_PAGE + "|" + page + "|" + mode:
-			return onButtonPrevAndBack(c, userService, mode)
-		case constants.USER_DATA_PREFIX + id:
-			return onUserData(c, wishlistService, userService)
-		case constants.BACK_TO_LIST:
-			return handleUserList(c, userService, constants.SHOW_USERS)
-		case constants.BTN_SHOW_ALL_WISHLIST:
-			return onShowWishlist(c, wishlistService)
-		case constants.BTN_REGISTER_WISHLIST:
-			return onButtonRegWishList(c)
-		case constants.DELETE_WISH:
-			return onButtonDeleteWish(c)
-		case constants.SEND_MESSAGE_ADMIN + "_" + id:
-			return onChooseUser(c, id)
-		}
-		return c.Respond()
-	}, checkSheluvssic())
+	// bot.Handle(telebot.OnCallback, func(c telebot.Context) error {
+	// 	var page, id, mode string
+	// 	callback := c.Callback().Data[1:]
+	// 	if strings.Contains(callback, "_") {
+	// 		id = strings.Split(callback, "_")[1]
+	// 	}
+	// 	if strings.Contains(callback, "|") {
+	// 		splitted := strings.Split(callback, "|")
+	// 		page = strings.Split(callback, "|")[1]
+	// 		if len(splitted) > 1 {
+	// 			mode = strings.Split(callback, "|")[2]
+	// 		}
+	// 	}
+	// 	switch callback {
+	// 	case constants.BTN_SHOW_ALL_WISHLIST:
+	// 		return onShowWishlist(c, wishlistService)
+	// 	case constants.BTN_REGISTER_WISHLIST:
+	// 		return onButtonRegWishList(c)
+	// 	case constants.DELETE_WISH:
+	// 		return onButtonDeleteWish(c)
+	// 	case constants.SEND_MESSAGE_ADMIN + "_" + id:
+	// 		return onChooseUser(c, id)
+	// 	}
+	// 	return c.Respond()
+	// }, checkSheluvssic())
 
 	bot.Handle(telebot.OnText, func(c telebot.Context) error {
 		userState, exists := states[c.Chat().ID]
