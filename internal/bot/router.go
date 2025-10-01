@@ -13,13 +13,15 @@ import (
 type HandlerRouter struct {
 	userHandler     *UserHandler
 	wishlistHandler *WishlistHandler
+	adminHandler    *AdminHandler
 	states          fsm.StateStore
 }
 
-func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, states fsm.StateStore) *HandlerRouter {
+func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore) *HandlerRouter {
 	return &HandlerRouter{
 		userHandler:     user,
 		wishlistHandler: wishlist,
+		adminHandler:    admin,
 		states:          states,
 	}
 }
@@ -47,7 +49,7 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	case constants.BTN_WISHLIST:
 		return r.wishlistHandler.Show(c)
 	case constants.BTN_ALL_USERS:
-		return r.userHandler.UserList(c, callbackData.mode)
+		return r.userHandler.UserList(c, constants.SHOW_USERS)
 	case constants.BTN_PREV:
 		return r.userHandler.Prev(c)
 	case constants.BTN_DELETE_ME:
@@ -59,7 +61,9 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	case constants.USER_DATA_PREFIX:
 		return r.UserData(c)
 	case constants.BACK_TO_LIST:
-		return r.userHandler.UserList(c, callbackData.mode)
+		return r.userHandler.UserList(c, constants.SHOW_USERS)
+	case constants.SEND_MESSAGE_ADMIN:
+		return r.userHandler.UserList(c, constants.SEND_MESSAGE_ADMIN)
 
 	// кнопки wishlist
 	case constants.BTN_SHOW_ALL_WISHLIST:
@@ -71,12 +75,6 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	default:
 		return r.Error(c)
 	}
-
-	// if strings.HasPrefix(data, "SEND_MESSAGE_ADMIN_") {
-	// 	idStr := strings.TrimPrefix(data, "SEND_MESSAGE_ADMIN_")
-	// 	r.states.Set(c.Chat().ID, "SEND_MESSAGE_ADMIN_"+idStr)
-	// 	return c.Edit("Введите сообщение для данного пользователя")
-	// }
 }
 
 func (r *HandlerRouter) OnText(c telebot.Context) error {
@@ -84,21 +82,30 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 	if ok != nil {
 		return c.Send("Пожалуйста, начните с /start")
 	}
+	callback := parseCallback(c.Callback().Unique)
 
 	switch state {
-	case "AWAITING_NEW_NAME":
+	case constants.AWAITING_NAME:
+		return r.userHandler.AwaitingName(c)
+	case constants.AWAITING_SURNAME:
+		return r.userHandler.AwaitingSurname(c)
+	case constants.AWAITING_BIRTHDATE:
+		return r.userHandler.AwaitingBirthdate(c)
+	case constants.AWAITING_NEW_NAME:
 		return r.userHandler.AwaitingNewName(c)
-	case "AWAITING_NEW_SURNAME":
+	case constants.AWAITING_NEW_SURNAME:
 		return r.userHandler.AwaitingNewSurname(c)
-	case "AWAITING_NEW_BIRTHDATE":
+	case constants.AWAITING_NEW_BIRTHDATE:
 		return r.userHandler.AwaitingNewBirthdate(c)
-	case "AWAITING_NEW_USERNAME":
+	case constants.AWAITING_NEW_USERNAME:
 		return r.userHandler.AwaitingNewUsername(c)
 
-	case "AWAITING_WISHES":
+	case constants.AWAITING_WISHES:
 		return r.wishlistHandler.Awaiting(c)
-	case "DELETE_WISH":
+	case constants.DELETE_WISH:
 		return r.wishlistHandler.AwaitingDelete(c)
+	case constants.SEND_MESSAGE_ADMIN:
+		return r.adminHandler.SendMessage(c, callback.id)
 
 	default:
 		return c.Send("Неизвестное состояние, возвращаем в главное меню", MainMenu())

@@ -467,7 +467,11 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 		for _, user := range users {
 			btn := markup.Data(
 				fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
-				constants.USER_DATA_PREFIX+strconv.FormatInt(user.ID, 10),
+				NewCallbackData(
+					constants.SHOW_USERS,
+					mode,
+					strconv.FormatInt(user.ID, 10),
+					"").string(),
 			)
 			rows = append(rows, markup.Row(btn))
 		}
@@ -476,7 +480,11 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 		for _, user := range users {
 			btn := markup.Data(
 				fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
-				constants.SEND_MESSAGE_ADMIN+"_"+strconv.FormatInt(user.ID, 10),
+				NewCallbackData(
+					constants.SEND_MESSAGE_ADMIN,
+					mode,
+					strconv.FormatInt(user.ID, 10),
+					"").string(),
 			)
 			rows = append(rows, markup.Row(btn))
 		}
@@ -485,18 +493,37 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 	if pagination.TotalPages > 1 {
 		var paginationRow []telebot.Btn
 		if pagination.CurrentPage > 1 {
-			prevBtn := markup.Data("⬅", constants.BTN_PREV_PAGE, strconv.Itoa(pagination.CurrentPage-1), mode)
+			prevBtn := markup.Data("⬅",
+				NewCallbackData(
+					constants.BTN_PREV_PAGE,
+					mode,
+					"",
+					strconv.Itoa(pagination.CurrentPage-1)).string(),
+			)
 			paginationRow = append(paginationRow, prevBtn)
 		}
 
 		if pagination.CurrentPage < pagination.TotalPages {
-			nextBtn := markup.Data("➡", constants.BTN_NEXT_PAGE, strconv.Itoa(pagination.CurrentPage+1), mode)
+			nextBtn := markup.Data("➡",
+				NewCallbackData(
+					constants.BTN_PREV_PAGE,
+					mode,
+					"",
+					strconv.Itoa(pagination.CurrentPage-1)).string(),
+			)
 			paginationRow = append(paginationRow, nextBtn)
 		}
 
 		rows = append(rows, markup.Row(paginationRow...))
 	}
-	rows = append(rows, markup.Row(markup.Data("В начало", constants.BTN_PREV)))
+	rows = append(rows, markup.Row(markup.Data("В начало",
+		NewCallbackData(
+			constants.BTN_PREV,
+			"",
+			"",
+			"").string(),
+	),
+	))
 
 	markup.Inline(rows...)
 	return markup

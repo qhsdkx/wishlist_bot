@@ -1,6 +1,12 @@
 package bot
 
 import (
+	"errors"
+	"log"
+	"os"
+	"time"
+
+	"github.com/joho/godotenv"
 	"gopkg.in/telebot.v4"
 )
 
@@ -9,8 +15,24 @@ type Bot struct {
 	router HandlerRouter
 }
 
-func NewBot(tg *telebot.Bot, router HandlerRouter) *Bot {
-	return &Bot{tg: tg, router: router}
+func NewBot(router HandlerRouter) (*Bot, error) {
+	err := godotenv.Load(".env")
+	if err != nil {
+		return nil, errors.New("something went wrong with .env file")
+	}
+	pref := telebot.Settings{
+		Token:  os.Getenv("API_KEY"),
+		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
+	}
+	bot, err := telebot.NewBot(pref)
+	if err != nil {
+		log.Fatal(err)
+		return nil, err
+	}
+	return &Bot{
+		tg:     bot,
+		router: router,
+	}, nil
 }
 
 func (b *Bot) RegisterHandlers() {

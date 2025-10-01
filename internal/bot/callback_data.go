@@ -5,21 +5,31 @@ import (
 )
 
 type CallbackData struct {
-	mode string
-	id   string
-	page string
+	action string
+	mode   string
+	id     string
+	page   string
 }
 
-func NewCallbackData(mode, id, page string) CallbackData {
+func NewCallbackData(action, mode, id, page string) CallbackData {
 	return CallbackData{
-		mode: mode,
-		id:   id,
-		page: page,
+		action: action,
+		mode:   mode,
+		id:     id,
+		page:   page,
 	}
 }
 
+func EmptyCallbackData() CallbackData {
+	return CallbackData{}
+}
+
 func (c CallbackData) string() string {
-	return c.mode + "|" + c.id + "|" + c.page
+	return c.action + "|" + c.mode + "|" + c.id + "|" + c.page
+}
+
+func (c CallbackData) Action() string {
+	return c.action
 }
 
 func (c CallbackData) Mode() string {
@@ -34,11 +44,28 @@ func (c CallbackData) Page() string {
 	return c.page
 }
 
+func (c *CallbackData) SetAction(action string) {
+	c.action = action
+}
+
+func (c *CallbackData) SetMode(mode string) {
+	c.mode = mode
+}
+
+func (c *CallbackData) SetId(id string) {
+	c.id = id
+}
+
+func (c *CallbackData) SetPage(page string) {
+	c.page = page
+}
+
 func parseCallback(value string) CallbackData {
 	data := strings.Split(value, "|")
 	return CallbackData{
-		mode: data[0],
-		id:   data[1],
-		page: data[2],
+		action: data[0],
+		mode:   data[1],
+		id:     data[2],
+		page:   data[3],
 	}
 }

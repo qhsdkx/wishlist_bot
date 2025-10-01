@@ -1,6 +1,7 @@
 package fsm
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -13,21 +14,26 @@ func NewInMemoryStateStore() *InMemoryStateStore {
 	return &InMemoryStateStore{store: make(map[int64]string)}
 }
 
-func (s *InMemoryStateStore) Set(userID int64, state string) {
+func (s *InMemoryStateStore) Set(userID int64, state string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.store[userID] = state
+	return nil
 }
 
-func (s *InMemoryStateStore) Get(userID int64) (string, bool) {
+func (s *InMemoryStateStore) Get(userID int64) (string, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	st, ok := s.store[userID]
-	return st, ok
+	if !ok {
+		return "", errors.New("cannot get state")
+	}
+	return st, nil
 }
 
-func (s *InMemoryStateStore) Delete(userID int64) {
+func (s *InMemoryStateStore) Delete(userID int64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.store, userID)
+	return nil
 }
