@@ -12,7 +12,7 @@ import (
 func Start() {
 	db, err := database.Init()
 	if err != nil {
-		log.Printf("Error with db connection: %w+", err)
+		log.Printf("Error with db connection: %w", err)
 	}
 	ur := user.NewRepository(db)
 	wr := wishlist.NewRepository(db)
@@ -29,7 +29,7 @@ func Start() {
 	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states)
 	bot, err := bot.NewBot(*mainRouter)
 	if err != nil {
-		log.Printf("Error with create bot: %w+", err)
+		log.Printf("Error with create bot: %w", err)
 	}
 	bot.RegisterHandlers()
 	bot.Start()

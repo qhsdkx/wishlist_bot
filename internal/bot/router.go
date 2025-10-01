@@ -28,8 +28,7 @@ func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *Admin
 
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	data := c.Callback().Data
-	unique := c.Callback().Unique
-	callbackData := parseCallback(unique)
+	callbackData := parseCallback(c.Callback().Unique)
 
 	switch data {
 	case constants.BTN_EDIT_NAME:

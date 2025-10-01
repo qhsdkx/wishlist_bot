@@ -62,10 +62,14 @@ func (c *CallbackData) SetPage(page string) {
 
 func parseCallback(value string) CallbackData {
 	data := strings.Split(value, "|")
+	dataMap := make(map[int]string)
+	for i := range data {
+		dataMap[i] = data[i]
+	}
 	return CallbackData{
-		action: data[0],
-		mode:   data[1],
-		id:     data[2],
-		page:   data[3],
+		action: dataMap[0],
+		mode:   dataMap[1],
+		id:     dataMap[2],
+		page:   dataMap[3],
 	}
 }
