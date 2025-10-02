@@ -8,11 +8,11 @@ import (
 
 func MainMenu() *telebot.ReplyMarkup {
 	menu := &telebot.ReplyMarkup{}
-	btnMe := menu.Data("Редактировать мои данные", consta.BTN_ME)
-	btnWishlist := menu.Data("Список желаний", consta.BTN_WISHLIST)
-	btnAllUsers := menu.Data("Показать всех пользователей", consta.BTN_ALL_USERS)
-	btnDeleteMe := menu.Data("Удалить меня в базе", consta.BTN_DELETE_ME)
-	btnHelp := menu.Data("Помощь", consta.BTN_HELP)
+	btnMe := menu.Data("Редактировать мои данные", NewCallbackData(consta.BTN_ME, "", "", "").string())
+	btnWishlist := menu.Data("Список желаний", NewCallbackData(consta.BTN_WISHLIST, "", "", "").string())
+	btnAllUsers := menu.Data("Показать всех пользователей", NewCallbackData(consta.BTN_ALL_USERS, "", "", "").string())
+	btnDeleteMe := menu.Data("Удалить меня в базе", NewCallbackData(consta.BTN_DELETE_ME, "", "", "").string())
+	btnHelp := menu.Data("Помощь", NewCallbackData(consta.BTN_HELP, "", "", "").string())
 
 	menu.Inline(
 		menu.Row(btnMe),
@@ -26,11 +26,11 @@ func MainMenu() *telebot.ReplyMarkup {
 
 func EditMenu() *telebot.ReplyMarkup {
 	m := &telebot.ReplyMarkup{}
-	btnBirthdate := m.Data("Дата рождения", consta.BTN_EDIT_BIRTHDATE)
-	btnSurname := m.Data("Фамилия", consta.BTN_EDIT_SURNAME)
-	btnName := m.Data("Имя", consta.BTN_EDIT_NAME)
-	btnUsername := m.Data("Никнейм в телеграме", consta.BTN_EDIT_USERNAME)
-	btnPrev := m.Data("⬅", consta.BTN_PREV)
+	btnBirthdate := m.Data("Дата рождения", NewCallbackData(consta.BTN_EDIT_BIRTHDATE, "", "", "").string())
+	btnSurname := m.Data("Фамилия", NewCallbackData(consta.BTN_EDIT_SURNAME, "", "", "").string())
+	btnName := m.Data("Имя", NewCallbackData(consta.BTN_EDIT_NAME, "", "", "").string())
+	btnUsername := m.Data("Никнейм в телеграме", NewCallbackData(consta.BTN_EDIT_USERNAME, "", "", "").string())
+	btnPrev := m.Data("⬅", NewCallbackData(consta.BTN_PREV, "", "", "").string())
 
 	m.Inline(
 		m.Row(btnBirthdate),
@@ -44,10 +44,10 @@ func EditMenu() *telebot.ReplyMarkup {
 
 func WishlistMenu() *telebot.ReplyMarkup {
 	m := &telebot.ReplyMarkup{}
-	btnShowWishlist := m.Data("Показать мои пожелания", consta.BTN_SHOW_ALL_WISHLIST)
-	btnRegWishlist := m.Data("Внести пожелания", consta.BTN_REGISTER_WISHLIST)
-	btnDeleteWish := m.Data("Удалить пожелание", consta.DELETE_WISH)
-	btnPrev := m.Data("⬅", consta.BTN_PREV)
+	btnShowWishlist := m.Data("Показать мои пожелания", NewCallbackData(consta.BTN_SHOW_ALL_WISHLIST, "", "", "").string())
+	btnRegWishlist := m.Data("Внести пожелания", NewCallbackData(consta.BTN_REGISTER_WISHLIST, "", "", "").string())
+	btnDeleteWish := m.Data("Удалить пожелание", NewCallbackData(consta.DELETE_WISH, "", "", "").string())
+	btnPrev := m.Data("⬅", NewCallbackData(consta.BTN_PREV, "", "", "").string())
 
 	m.Inline(
 		m.Row(btnShowWishlist),
@@ -60,7 +60,7 @@ func WishlistMenu() *telebot.ReplyMarkup {
 
 func BackOnlyMenu() *telebot.ReplyMarkup {
 	m := &telebot.ReplyMarkup{}
-	btnPrev := m.Data("⬅", consta.BTN_PREV)
+	btnPrev := m.Data("⬅", NewCallbackData(consta.BTN_PREV, "", "", "").string())
 	m.Inline(
 		m.Row(btnPrev),
 	)
@@ -69,7 +69,7 @@ func BackOnlyMenu() *telebot.ReplyMarkup {
 
 func RegisterOnlyMenu() *telebot.ReplyMarkup {
 	m := &telebot.ReplyMarkup{}
-	btnReg := m.Data("Регистрация", consta.BTN_REGISTER)
+	btnReg := m.Data("Регистрация", NewCallbackData(consta.BTN_REGISTER, "", "", "").string())
 	btnHelp := m.Data("Помощь", consta.BTN_HELP)
 
 	m.Inline(

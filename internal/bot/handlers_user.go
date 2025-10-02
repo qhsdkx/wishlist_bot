@@ -206,6 +206,13 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 
 func (h *UserHandler) Register(c telebot.Context) error {
 	if registered := h.service.CheckIfRegistered(c.Chat().ID); registered != nil {
+		h.service.Save(user.User{
+			ID: c.Chat().ID, 
+			Name: c.Chat().FirstName, 
+			Surname: c.Chat().LastName, 
+			Username: "@" + c.Chat().Username,
+			Status: constants.ADDED,
+		})
 		h.states.Set(c.Chat().ID, constants.AWAITING_BIRTHDATE)
 		if err := c.Edit("Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
 			return err
@@ -251,7 +258,7 @@ func (h *UserHandler) Register(c telebot.Context) error {
 
 func (h *UserHandler) Prev(c telebot.Context) error {
 	h.states.Delete(c.Chat().ID)
-	return c.Edit(c.Message(), "Возвращаем вас в начало", MainMenu())
+	return c.Edit("Возвращаем вас в начало", MainMenu())
 }
 
 // func onButtonPrev(c telebot.Context) error {

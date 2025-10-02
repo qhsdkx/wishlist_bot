@@ -9,8 +9,8 @@ type Service struct {
 	repo *Repository
 }
 
-func NewService(r *Repository) *Service {
-	return &Service{repo: r}
+func NewService(r *Repository) Service {
+	return Service{repo: r}
 }
 
 func (s *Service) FindByID(id int64) (User, error) {

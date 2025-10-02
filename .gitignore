@@ -10,6 +10,7 @@
 /bin/
 /dist/
 /build/
+__debug_bin.exe
 
 # Ignore IDE files
 .vscode/

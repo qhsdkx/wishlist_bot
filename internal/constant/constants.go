@@ -50,7 +50,7 @@ const (
 
 const (
 	USERS_PER_PAGE   = 10
-	USER_DATA_PREFIX = "user_"
+	USER_DATA_PREFIX = "user"
 	BACK_TO_LIST     = "back_to_list"
 )
 

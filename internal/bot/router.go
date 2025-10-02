@@ -1,7 +1,9 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 	constants "wishlist-bot/internal/constant"
@@ -17,8 +19,8 @@ type HandlerRouter struct {
 	states          fsm.StateStore
 }
 
-func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore) *HandlerRouter {
-	return &HandlerRouter{
+func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore) HandlerRouter {
+	return HandlerRouter{
 		userHandler:     user,
 		wishlistHandler: wishlist,
 		adminHandler:    admin,
@@ -27,10 +29,9 @@ func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *Admin
 }
 
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
-	data := c.Callback().Data
-	callbackData := parseCallback(c.Callback().Unique)
+	callbackData := parseCallback(c.Callback().Data[1:])
 
-	switch data {
+	switch callbackData.action {
 	case constants.BTN_EDIT_NAME:
 		return r.userHandler.EditName(c)
 	case constants.BTN_EDIT_SURNAME:
@@ -81,7 +82,11 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 	if ok != nil {
 		return c.Send("Пожалуйста, начните с /start")
 	}
-	callback := parseCallback(c.Callback().Unique)
+
+	id, err := parseID(state)
+	if err != nil {
+		log.Printf("Can't parse id or another state: %w", err)
+	}
 
 	switch state {
 	case constants.AWAITING_NAME:
@@ -104,7 +109,7 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 	case constants.DELETE_WISH:
 		return r.wishlistHandler.AwaitingDelete(c)
 	case constants.SEND_MESSAGE_ADMIN:
-		return r.adminHandler.SendMessage(c, callback.id)
+		return r.adminHandler.SendMessage(c, id)
 
 	default:
 		return c.Send("Неизвестное состояние, возвращаем в главное меню", MainMenu())
@@ -150,4 +155,15 @@ func (r *HandlerRouter) UserData(c telebot.Context) error {
 	}
 
 	return c.Respond()
+}
+
+func parseID(state string) (string, error) {
+	if strings.HasPrefix(state, constants.SEND_MESSAGE_ADMIN + "_") {
+		after, found := strings.CutPrefix(state, constants.SEND_MESSAGE_ADMIN + "_")
+		if !found {
+			return "", errors.New("Error with state")
+		}
+		return after, nil
+	}
+	return state, nil
 }

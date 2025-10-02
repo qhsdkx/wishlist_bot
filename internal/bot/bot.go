@@ -16,7 +16,7 @@ type Bot struct {
 }
 
 func NewBot(router HandlerRouter) (*Bot, error) {
-	err := godotenv.Load(".env")
+	err := godotenv.Load()
 	if err != nil {
 		return nil, errors.New("something went wrong with .env file")
 	}
@@ -44,4 +44,8 @@ func (b *Bot) RegisterHandlers() {
 
 func (b *Bot) Start() {
 	b.tg.Start()
+}
+
+func (b *Bot) API() *telebot.Bot {
+	return b.tg
 }

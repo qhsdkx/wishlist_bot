@@ -7,6 +7,7 @@ import (
 	"wishlist-bot/internal/wishlist"
 	"wishlist-bot/internal/bot"
 	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/scheduler"
 )
 
 func Start() {
@@ -22,15 +23,20 @@ func Start() {
 
 	states := fsm.NewInMemoryStateStore()
 
-	uRouter := bot.NewUserHandler(*us, states)
-	wRouter := bot.NewWishlistHandler(*ws, states)
-	aRouter := bot.NewAdminHandler(*us, *ws, states)
+	uRouter := bot.NewUserHandler(us, states)
+	wRouter := bot.NewWishlistHandler(ws, states)
+	aRouter := bot.NewAdminHandler(us, ws, states)
 
 	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states)
-	bot, err := bot.NewBot(*mainRouter)
+	bot, err := bot.NewBot(mainRouter)
 	if err != nil {
 		log.Printf("Error with create bot: %w", err)
 	}
+
+	sch := scheduler.NewScheduler(bot.API(), us, ws)
+	go sch.StartScheduler()
+
 	bot.RegisterHandlers()
 	bot.Start()
+	select {}
 }
