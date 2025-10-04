@@ -36,10 +36,10 @@ func NewBot(router HandlerRouter) (*Bot, error) {
 }
 
 func (b *Bot) RegisterHandlers() {
-	b.tg.Handle("/start", b.router.OnStart)
-	b.tg.Handle(telebot.OnText, b.router.OnText)
-	b.tg.Handle(telebot.OnCallback, b.router.OnCallback)
-	b.tg.Handle("/help", b.router.Help)
+	b.tg.Handle("/start", b.router.OnStart, b.router.checkSheluvssic())
+	b.tg.Handle(telebot.OnText, b.router.OnText, b.router.checkSheluvssic())
+	b.tg.Handle(telebot.OnCallback, b.router.OnCallback, b.router.checkSheluvssic())
+	b.tg.Handle("/help", b.router.Help, b.router.checkSheluvssic())
 }
 
 func (b *Bot) Start() {
