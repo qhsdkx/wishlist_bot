@@ -1,3 +1,19 @@
-/.env
-/.idea
-/wishlist-bot
+# Ignore all .env files
+.env
+*.env
+
+# Ignore environment specific files
+.env.local
+.env.*.local
+
+# Ignore build directories
+/bin/
+/dist/
+/build/
+__debug_bin.exe
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
