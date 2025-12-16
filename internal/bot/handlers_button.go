@@ -44,13 +44,11 @@ func EditMenu() *telebot.ReplyMarkup {
 
 func WishlistMenu() *telebot.ReplyMarkup {
 	m := &telebot.ReplyMarkup{}
-	btnShowWishlist := m.Data("Показать мои пожелания", NewCallbackData(consta.BTN_SHOW_ALL_WISHLIST, "", "", "").string())
 	btnRegWishlist := m.Data("Внести пожелания", NewCallbackData(consta.BTN_REGISTER_WISHLIST, "", "", "").string())
 	btnDeleteWish := m.Data("Удалить пожелание", NewCallbackData(consta.DELETE_WISH, "", "", "").string())
 	btnPrev := m.Data("⬅", NewCallbackData(consta.BTN_PREV, "", "", "").string())
 
 	m.Inline(
-		m.Row(btnShowWishlist),
 		m.Row(btnRegWishlist),
 		m.Row(btnDeleteWish),
 		m.Row(btnPrev),

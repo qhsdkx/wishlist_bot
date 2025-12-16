@@ -66,8 +66,6 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 		return r.userHandler.UserList(c, constants.SEND_MESSAGE_ADMIN)
 
 	// кнопки wishlist
-	case constants.BTN_SHOW_ALL_WISHLIST:
-		return r.wishlistHandler.Show(c)
 	case constants.BTN_REGISTER_WISHLIST:
 		return r.wishlistHandler.Register(c)
 	case constants.DELETE_WISH:

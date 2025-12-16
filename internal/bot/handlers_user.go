@@ -153,18 +153,18 @@ func (h *UserHandler) AwaitingBirthdate(c telebot.Context) error {
 
 func (h *UserHandler) AwaitingName(c telebot.Context) error {
 	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
-		return c.Send(fmt.Print("Вероятно, вы ввели имя и фамилию сразу.\nВведите пожалуйста только имя"))
+		return c.Send("Вероятно, вы ввели имя и фамилию сразу. Введите пожалуйста только имя")
 	}
 	if err := h.service.UpdateName(c.Text(), c.Chat().ID); err == nil {
 		h.states.Set(c.Chat().ID, constants.AWAITING_SURNAME)
-		return c.Send("Имя успешно сохранено. Далее введите желаемую в системе фамилию")
+		return c.Send("Имя успешно сохранено.\nДалее введите желаемую в системе фамилию")
 	}
 	return c.Send("Ошибка сохранения данных", MainMenu())
 }
 
 func (h *UserHandler) AwaitingSurname(c telebot.Context) error {
 	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
-		return c.Send(fmt.Print("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию"))
+		return c.Send("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию")
 	}
 	if err := h.service.UpdateSurname(c.Text(), c.Chat().ID); err == nil {
 		errUpdate := h.service.UpdateStatus(constants.REGISTERED, c.Chat().ID)

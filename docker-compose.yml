@@ -16,5 +16,5 @@
       POSTGRES_PASSWORD: wishlist
       POSTGRES_DB: postgres
     ports:
-      - "5432:5432"
+      - "5434:5432"
     restart: unless-stopped

@@ -13,7 +13,7 @@ import (
 func Start() {
 	db, err := database.Init()
 	if err != nil {
-		log.Printf("Error with db connection: %w", err)
+		log.Printf("Error with db connection: %s", err)
 	}
 	ur := user.NewRepository(db)
 	wr := wishlist.NewRepository(db)

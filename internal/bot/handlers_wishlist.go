@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	constants "wishlist-bot/internal/constant"
 	"wishlist-bot/internal/fsm"
 	"wishlist-bot/internal/wishlist"
 
@@ -35,7 +36,7 @@ func (h *WishlistHandler) Show(c telebot.Context) error {
 }
 
 func (h *WishlistHandler) Register(c telebot.Context) error {
-	h.states.Set(c.Chat().ID, "AWAITING_WISHES")
+	h.states.Set(c.Chat().ID, constants.AWAITING_WISHES)
 	return c.Edit("Введите ваши пожелания через запятую")
 }
 
