@@ -1,20 +1,37 @@
 package app
 
 import (
+	"fmt"
 	"log"
-	"wishlist-bot/pkg/database"
-	"wishlist-bot/internal/user"
-	"wishlist-bot/internal/wishlist"
+	"log/slog"
 	"wishlist-bot/internal/bot"
+	"wishlist-bot/internal/config"
 	"wishlist-bot/internal/fsm"
 	"wishlist-bot/internal/scheduler"
+	"wishlist-bot/internal/user"
+	"wishlist-bot/internal/wishlist"
+	"wishlist-bot/pkg/database"
 )
 
-func Start() {
+type App struct {
+	cfg    *config.Config
+	log    *slog.Logger
+	botApp *bot.App
+}
+
+func New(cfg *config.Config, log *slog.Logger) *App {
+	return &App{
+		cfg: cfg,
+		log: log,
+	}
+}
+
+func (a *App) MustStart() {
 	db, err := database.Init()
 	if err != nil {
-		log.Printf("Error with db connection: %s", err)
+		panic(fmt.Errorf("error with db connection: %w", err))
 	}
+
 	ur := user.NewRepository(db)
 	wr := wishlist.NewRepository(db)
 
@@ -39,4 +56,10 @@ func Start() {
 	bot.RegisterHandlers()
 	bot.Start()
 	select {}
+}
+
+func (a *App) Stop() {
+	const op = "app.Stop"
+	a.log.Info(op)
+
 }

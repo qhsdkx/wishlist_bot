@@ -1,0 +1,16 @@
+database:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: wishlist
+  name: postgres
+  max-db-connections: 30
+
+bot:
+  api-key: 8083926726:AAGPgY9lBJEmQIQ81k0KxyouplLd9lpxrvE
+
+scheduler:
+  notification-time-daily: 10:00
+  notification-time-weekly: 9:55
+
+admin-id: 1429905348
