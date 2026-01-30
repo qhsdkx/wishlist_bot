@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"wishlist-bot/internal/config"
 	constants "wishlist-bot/internal/constant"
 	"wishlist-bot/internal/user"
 	"wishlist-bot/internal/wishlist"
@@ -19,50 +20,51 @@ type Scheduler struct {
 	bot *telebot.Bot
 	us  user.Service
 	ws  wishlist.Service
+	s   *gocron.Scheduler
+	cfg *config.Config
 }
 
-func NewScheduler(bot *telebot.Bot, us user.Service, ws wishlist.Service) *Scheduler {
+func New(bot *telebot.Bot, us user.Service, ws wishlist.Service, cfg *config.Config) *Scheduler {
+	location, _ := time.LoadLocation(constants.LOCATION)
 	return &Scheduler{
 		bot: bot,
 		us:  us,
 		ws:  ws,
+		s:   gocron.NewScheduler(location),
+		cfg: cfg,
 	}
 }
 
-func (sch *Scheduler) StartScheduler() {
-	location, _ := time.LoadLocation(constants.LOCATION)
-	s := gocron.NewScheduler(location)
-
-	scheduleTime := os.Getenv("NOTIFICATION_TIME")
+func (sch *Scheduler) Start() {
+	scheduleTime := os.Getenv(sch.cfg.Scheduler.NotifTimeDaily)
 	if scheduleTime == "" {
 		scheduleTime = "10:00"
 	}
 
-	scheduleTimeWeekly := os.Getenv("NOTIFICATION_TIME_WEEKLY")
+	scheduleTimeWeekly := os.Getenv(sch.cfg.Scheduler.NotifTimeWeekly)
 	if scheduleTimeWeekly == "" {
 		scheduleTimeWeekly = "9:55"
 	}
 
-	_, err := s.Every(1).Days().At(scheduleTime).Do(sch.sendDailyNotifications)
+	_, err := sch.s.Every(1).Days().At(scheduleTime).Do(sch.sendDailyNotifications)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
 
-	_, err = s.Every(1).Days().At(scheduleTimeWeekly).Do(sch.sendWeeklyNotifications)
+	_, err = sch.s.Every(1).Days().At(scheduleTimeWeekly).Do(sch.sendWeeklyNotifications)
 	if err != nil {
 		log.Fatalf("Error scheduling task: %v", err)
 	}
 
-	_, err = s.Every(1).Days().At("23:50").Do(sch.deleteWishes)
+	_, err = sch.s.Every(1).Days().At("23:50").Do(sch.deleteWishes)
 
-	s.StartAsync()
+	sch.s.StartAsync()
 }
 
 func (sch *Scheduler) sendDailyNotifications() {
-	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
+		_, sendErr := sch.bot.Send(telebot.ChatID(sch.cfg.AdminId), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
 		}
@@ -122,6 +124,10 @@ func (sch *Scheduler) deleteWishes() {
 			sch.ws.DeleteAll(bd.ID)
 		}
 	}
+}
+
+func (sch *Scheduler) Stop() {
+	sch.s.Stop()
 }
 
 func splitUsersByBirthday(users []user.User, daysBefore int) (birthdayTomorrow []user.User, others []user.User) {

@@ -7,28 +7,28 @@ import (
 )
 
 type Config struct {
-	adminId   int64           `yaml:"admin-id"`
-	database  DatabaseConfig  `yaml:"database"`
-	bot       BotConfig       `yaml:"bot"`
-	scheduler SchedulerConfig `yaml:"scheduler"`
+	AdminId   int64           `yaml:"admin-id"`
+	Database  DatabaseConfig  `yaml:"database"`
+	Bot       BotConfig       `yaml:"bot"`
+	Scheduler SchedulerConfig `yaml:"scheduler"`
 }
 
 type DatabaseConfig struct {
-	host       string `yaml:"host"`
-	port       string `yaml:"port"`
-	user       string `yaml:"user"`
-	password   string `yaml:"password"`
-	name       string `yaml:"name"`
-	maxDBConns int    `yaml:"max-db-connections"`
+	Host       string `yaml:"host"`
+	Port       string `yaml:"port"`
+	User       string `yaml:"user"`
+	Password   string `yaml:"password"`
+	Name       string `yaml:"name"`
+	MaxDBConns int    `yaml:"max-db-connections"`
 }
 
 type BotConfig struct {
-	apiKey string `yaml:"api-key"`
+	ApiKey string `yaml:"api-key"`
 }
 
 type SchedulerConfig struct {
-	notifTimeDaily  string `yaml:"notification-time-daily"`
-	notifTimeWeekly string `yaml:"notification-time-weekly"`
+	NotifTimeDaily  string `yaml:"notification-time-daily"`
+	NotifTimeWeekly string `yaml:"notification-time-weekly"`
 }
 
 func MustLoad() *Config {

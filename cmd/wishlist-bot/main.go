@@ -13,7 +13,9 @@ func main() {
 
 	log := logger.InitializeLogger()
 
-	go app.Start(cfg, log)
+	mainApp := app.New(cfg, log)
+
+	go mainApp.MustStart()
 
 	stop := make(chan os.Signal, 1)
 
@@ -21,5 +23,5 @@ func main() {
 
 	<-stop
 
-	app.Stop()
+	mainApp.Stop()
 }

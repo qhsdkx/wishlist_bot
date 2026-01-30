@@ -2,12 +2,10 @@ package bot
 
 import (
 	"errors"
-	"log"
-	"os"
-	"time"
-
-	"github.com/joho/godotenv"
 	"gopkg.in/telebot.v4"
+	"log"
+	"time"
+	"wishlist-bot/internal/config"
 )
 
 type Bot struct {
@@ -15,22 +13,23 @@ type Bot struct {
 	router HandlerRouter
 }
 
-func NewBot(router HandlerRouter) (*Bot, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, errors.New("something went wrong with .env file")
+func New(router HandlerRouter, cfg config.BotConfig) (*Bot, error) {
+	if cfg.ApiKey == "" {
+		return nil, errors.New("token is empty")
 	}
+
 	pref := telebot.Settings{
-		Token:  os.Getenv("API_KEY"),
+		Token:  cfg.ApiKey,
 		Poller: &telebot.LongPoller{Timeout: 10 * time.Second},
 	}
-	bot, err := telebot.NewBot(pref)
+	tgBot, err := telebot.NewBot(pref)
 	if err != nil {
 		log.Fatal(err)
 		return nil, err
 	}
+
 	return &Bot{
-		tg:     bot,
+		tg:     tgBot,
 		router: router,
 	}, nil
 }
@@ -48,4 +47,8 @@ func (b *Bot) Start() {
 
 func (b *Bot) API() *telebot.Bot {
 	return b.tg
+}
+
+func (b *Bot) Stop() {
+	b.tg.Stop()
 }

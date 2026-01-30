@@ -1,12 +1,11 @@
 package app
 
 import (
-	"fmt"
-	"log"
 	"log/slog"
 	"wishlist-bot/internal/bot"
 	"wishlist-bot/internal/config"
 	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/logger/sl"
 	"wishlist-bot/internal/scheduler"
 	"wishlist-bot/internal/user"
 	"wishlist-bot/internal/wishlist"
@@ -14,9 +13,10 @@ import (
 )
 
 type App struct {
-	cfg    *config.Config
-	log    *slog.Logger
-	botApp *bot.App
+	cfg       *config.Config
+	log       *slog.Logger
+	bot       *bot.Bot
+	scheduler *scheduler.Scheduler
 }
 
 func New(cfg *config.Config, log *slog.Logger) *App {
@@ -27,10 +27,7 @@ func New(cfg *config.Config, log *slog.Logger) *App {
 }
 
 func (a *App) MustStart() {
-	db, err := database.Init()
-	if err != nil {
-		panic(fmt.Errorf("error with db connection: %w", err))
-	}
+	db := database.MustInit(a.cfg.Database)
 
 	ur := user.NewRepository(db)
 	wr := wishlist.NewRepository(db)
@@ -43,18 +40,24 @@ func (a *App) MustStart() {
 	uRouter := bot.NewUserHandler(us, states)
 	wRouter := bot.NewWishlistHandler(ws, states)
 	aRouter := bot.NewAdminHandler(us, ws, states)
-
 	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states)
-	bot, err := bot.NewBot(mainRouter)
+
+	botApi, err := bot.New(mainRouter, a.cfg.Bot)
 	if err != nil {
-		log.Printf("Error with create bot: %w", err)
+		a.log.Error("Error creating botApi", sl.Err(err))
+		panic(err)
 	}
 
-	sch := scheduler.NewScheduler(bot.API(), us, ws)
-	go sch.StartScheduler()
+	a.bot = botApi
 
-	bot.RegisterHandlers()
-	bot.Start()
+	a.scheduler = scheduler.New(a.bot.API(), us, ws, a.cfg)
+
+	go a.scheduler.Start()
+
+	a.bot.RegisterHandlers()
+
+	go a.bot.Start()
+
 	select {}
 }
 
@@ -62,4 +65,10 @@ func (a *App) Stop() {
 	const op = "app.Stop"
 	a.log.Info(op)
 
+	if a.scheduler != nil {
+		a.scheduler.Stop()
+	}
+	if a.bot != nil {
+		a.bot.Stop()
+	}
 }
