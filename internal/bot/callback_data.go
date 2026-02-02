@@ -4,6 +4,13 @@ import (
 	"strings"
 )
 
+const (
+	action = iota
+	mode
+	id
+	page
+)
+
 type CallbackData struct {
 	action string
 	mode   string
@@ -62,14 +69,10 @@ func (c *CallbackData) SetPage(page string) {
 
 func parseCallback(value string) CallbackData {
 	data := strings.Split(value, "|")
-	dataMap := make(map[int]string)
-	for i := range data {
-		dataMap[i] = data[i]
-	}
 	return CallbackData{
-		action: dataMap[0],
-		mode:   dataMap[1],
-		id:     dataMap[2],
-		page:   dataMap[3],
+		action: data[action],
+		mode:   data[mode],
+		id:     data[id],
+		page:   data[page],
 	}
 }
