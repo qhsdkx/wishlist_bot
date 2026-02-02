@@ -129,7 +129,6 @@ func (r *HandlerRouter) OnStart(c telebot.Context) error {
 
 	u, err := r.userHandler.service.FindByID(c.Chat().ID)
 	if err != nil || u.Status != "REGISTERED" {
-		r.log.Error(op, sl.Err(err))
 		return c.Send("Привет! Давай зарегистрируемся?", RegisterOnlyMenu())
 	}
 	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username), MainMenu())

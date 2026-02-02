@@ -27,7 +27,7 @@ func New(cfg *config.Config, log *slog.Logger) *App {
 }
 
 func (a *App) MustStart() {
-	db := database.MustInit(a.cfg.Database)
+	db := database.MustInit(a.cfg.Database, a.log)
 
 	ur := user.NewRepository(db, a.log)
 	wr := wishlist.NewRepository(db, a.log)

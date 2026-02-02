@@ -1,12 +1,19 @@
- services:
+version: '3.8'
+services:
   wishlist-bot:
     build:
       context: .
-    image: 10.0.14.15:5000/wishlist-bot:1.0.1
+    image: 10.0.14.15:5000/wishlist-bot:1.1.0
     container_name: wishlist-bot
+    environment:
+      CONFIG_PATH: ./config/config.yaml
     ports:
       - "8080:8080"
     restart: unless-stopped
+    depends_on:
+      - postgres
+    networks:
+      - app-network
 
   postgres:
     image: postgres:latest
@@ -18,3 +25,9 @@
     ports:
       - "5434:5432"
     restart: unless-stopped
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

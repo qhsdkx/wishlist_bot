@@ -26,21 +26,21 @@ func NewUserHandler(service user.Service, states fsm.StateStore, log *slog.Logge
 
 func (h *UserHandler) ShowProfile(c telebot.Context) error {
 	const op = "UserHandler.ShowProfile"
-	user, err := h.service.FindByID(c.Chat().ID)
+	u, err := h.service.FindByID(c.Chat().ID)
 	if err != nil {
-		h.log.Info(op, err, "user", user)
+		h.log.Info(op, err, "user", u)
 		return c.Edit(fmt.Sprintf("Невозможно найти юзера по ID %d", c.Chat().ID), MainMenu())
 	}
 
 	var msg strings.Builder
-	if user.Status == "REGISTERED" {
+	if u.Status == "REGISTERED" {
 		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-			user.Username, user.Surname, user.Name, user.Birthdate.Format("02.01.2006")))
+			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 		msg.WriteString("Кнопками ниже вы можете обновить данные")
-		return c.Edit(msg.String(), EditMenu())
+		return c.Send(msg.String(), EditMenu())
 	}
 
-	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", user.Name, user.Username))
+	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", u.Name, u.Username))
 	return c.Edit(msg.String(), MainMenu())
 }
 
@@ -63,7 +63,20 @@ func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
 	}
 
 	h.states.Delete(c.Chat().ID)
-	return c.Send("Имя успешно обновлено", EditMenu())
+	u, errFind := h.service.FindByID(c.Chat().ID)
+	var msg strings.Builder
+	if errFind != nil {
+		h.log.Info(op, errFind)
+		return c.Send("Ошибка. В начало.", MainMenu())
+	}
+	if u.Status == "REGISTERED" {
+		msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
+		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
+			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+		msg.WriteString("Кнопками ниже вы можете обновить данные")
+		return c.Send(msg.String(), EditMenu())
+	}
+	return c.Send("Ошибка. В начало.", MainMenu())
 }
 
 func (h *UserHandler) EditSurname(c telebot.Context) error {
@@ -79,13 +92,26 @@ func (h *UserHandler) AwaitingNewSurname(c telebot.Context) error {
 		return c.Send("Введите только фамилию, без имени")
 	}
 
-	if err := h.service.UpdateName(text, c.Chat().ID); err != nil {
+	if err := h.service.UpdateSurname(text, c.Chat().ID); err != nil {
 		h.log.Info(op, err)
 		return c.Send("Ошибка сохранения данных", MainMenu())
 	}
 
 	h.states.Delete(c.Chat().ID)
-	return c.Send("Фамилия успешно обновлена", EditMenu())
+	u, errFind := h.service.FindByID(c.Chat().ID)
+	var msg strings.Builder
+	if errFind != nil {
+		h.log.Info(op, errFind)
+		return c.Send("Ошибка. В начало.", MainMenu())
+	}
+	if u.Status == "REGISTERED" {
+		msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
+		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
+			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+		msg.WriteString("Кнопками ниже вы можете обновить данные")
+		return c.Send(msg.String(), EditMenu())
+	}
+	return c.Send("Ошибка. В начало.", MainMenu())
 }
 
 func (h *UserHandler) EditBirthdate(c telebot.Context) error {
@@ -104,7 +130,19 @@ func (h *UserHandler) AwaitingNewBirthdate(c telebot.Context) error {
 	if errUpdate := h.service.UpdateBirthdate(&date, c.Chat().ID); errUpdate == nil {
 		h.log.Info(op, errUpdate)
 		h.states.Delete(c.Chat().ID)
-		return c.Send("Дата успешно обновлена. Можете продолжить обновление", EditMenu())
+		u, errFind := h.service.FindByID(c.Chat().ID)
+		var msg strings.Builder
+		if errFind != nil {
+			h.log.Info(op, errFind)
+			return c.Send("Ошибка. В начало.", MainMenu())
+		}
+		if u.Status == "REGISTERED" {
+			msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
+			msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
+				u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+			msg.WriteString("Кнопками ниже вы можете обновить данные")
+			return c.Send(msg.String(), EditMenu())
+		}
 	}
 	return c.Send("Ошибка сохранения данных", MainMenu())
 }
@@ -126,7 +164,19 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 	if err := h.service.UpdateUsername(c.Text(), c.Chat().ID); err == nil {
 		h.log.Info(op, err)
 		h.states.Delete(c.Chat().ID)
-		return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", EditMenu())
+		u, errFind := h.service.FindByID(c.Chat().ID)
+		var msg strings.Builder
+		if errFind != nil {
+			h.log.Info(op, err)
+			return c.Send("Ошибка. В начало.", MainMenu())
+		}
+		if u.Status == "REGISTERED" {
+			msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
+			msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
+				u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+			msg.WriteString("Кнопками ниже вы можете обновить данные")
+			return c.Send(msg.String(), EditMenu())
+		}
 	}
 	return c.Send("Ошибка сохранения данных", MainMenu())
 }

@@ -296,12 +296,11 @@ func (ur *Repository) CheckIfRegistered(ID int64) error {
 	if exists.Next() {
 		errRead := exists.Scan(&result)
 		if errRead != nil {
-			ur.log.Error(op, sl.Err(err))
-			return fmt.Errorf("error at %s", err)
+			ur.log.Error(op, sl.Err(errRead))
+			return fmt.Errorf("error at %s", errRead)
 		}
 	}
 	if !result {
-		ur.log.Error(op, sl.Err(err))
 		return fmt.Errorf("user is unregistered")
 	}
 	return nil
