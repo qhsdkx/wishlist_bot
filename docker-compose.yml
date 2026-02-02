@@ -3,7 +3,7 @@ services:
   wishlist-bot:
     build:
       context: .
-    image: 10.0.14.15:5000/wishlist-bot:1.1.0
+    image: 10.0.14.15:5000/wishlist-bot:1.1.1
     container_name: wishlist-bot
     environment:
       CONFIG_PATH: ./config/config.yaml
