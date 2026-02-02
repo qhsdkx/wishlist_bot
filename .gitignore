@@ -21,3 +21,4 @@ __debug_bin.exe
 # Ignore config directory
 ./config
 ./config/*
+/config/config.yaml
