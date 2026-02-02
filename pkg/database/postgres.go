@@ -3,35 +3,30 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
-	"os"
+	"log/slog"
 	"strconv"
+	"wishlist-bot/internal/config"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-func Init() (*sql.DB, error) {
-	err := godotenv.Load()
-	if err != nil {
-		return nil, fmt.Errorf("error loading .env file: %w", err)
-	}
-
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+func MustInit(cfg config.DatabaseConfig, log *slog.Logger) *sql.DB {
+	port, _ := strconv.Atoi(cfg.Port)
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("HOST"), port, os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+		cfg.Host, port, cfg.User,
+		cfg.Password, cfg.Name)
+
+	log.Info("Connecting to database ", psqlInfo)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
-		log.Println(err)
-		return nil, fmt.Errorf("error connecting to database: %w", err)
+		panic(err)
 	}
 
-	conns, _ := strconv.Atoi(os.Getenv("MAX_DB_COONECTIONS"))
+	log.Info("Successfully connected to database", slog.Any("Database", db))
 
-	db.SetMaxOpenConns(conns)
-	db.SetMaxIdleConns(15)
+	db.SetMaxOpenConns(cfg.MaxDBConns)
+	db.SetMaxIdleConns(cfg.MaxDBConns)
 
-	return db, db.Ping()
+	return db
 }

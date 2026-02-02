@@ -1,16 +1,22 @@
 package user
 
 import (
+	"log/slog"
 	"time"
 	consta "wishlist-bot/internal/constant"
+	"wishlist-bot/internal/logger/sl"
 )
 
 type Service struct {
 	repo *Repository
+	log  *slog.Logger
 }
 
-func NewService(r *Repository) Service {
-	return Service{repo: r}
+func NewService(r *Repository, log *slog.Logger) Service {
+	return Service{
+		repo: r,
+		log:  log,
+	}
 }
 
 func (s *Service) FindByID(id int64) (User, error) {
@@ -26,14 +32,18 @@ func (us *Service) FindAllRegistered() ([]User, error) {
 }
 
 func (s *Service) FindAll(page, perPage int, mode string) ([]User, *Pagination, error) {
+	const op = "UserService.FindAll"
+
 	offset := (page - 1) * perPage
 	users, err := s.repo.FindAll(perPage, offset, mode)
 	if err != nil {
+		s.log.Error(op, sl.Err(err))
 		return nil, nil, err
 	}
 
 	total, err := s.repo.GetCount()
 	if err != nil {
+		s.log.Error(op, sl.Err(err))
 		return nil, nil, err
 	}
 

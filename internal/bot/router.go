@@ -4,10 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"log/slog"
 	"strconv"
 	"strings"
 	constants "wishlist-bot/internal/constant"
 	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/logger/sl"
 
 	"gopkg.in/telebot.v4"
 )
@@ -17,19 +19,23 @@ type HandlerRouter struct {
 	wishlistHandler *WishlistHandler
 	adminHandler    *AdminHandler
 	states          fsm.StateStore
+	log             *slog.Logger
 }
 
-func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore) HandlerRouter {
+func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore, log *slog.Logger) HandlerRouter {
 	return HandlerRouter{
 		userHandler:     user,
 		wishlistHandler: wishlist,
 		adminHandler:    admin,
 		states:          states,
+		log:             log,
 	}
 }
 
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	callbackData := parseCallback(c.Callback().Data[1:])
+
+	r.log.Info("Get callback data", callbackData)
 
 	switch callbackData.action {
 	case constants.BTN_EDIT_NAME:
@@ -59,7 +65,7 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	case constants.BTN_NEXT_PAGE:
 		return r.userHandler.PrevAndBack(c, callbackData.mode, callbackData.page)
 	case constants.USER_DATA_PREFIX:
-		return r.UserData(c)
+		return r.UserData(c, callbackData)
 	case constants.BACK_TO_LIST:
 		return r.userHandler.UserList(c, constants.SHOW_USERS)
 	case constants.SEND_MESSAGE_ADMIN:
@@ -77,12 +83,15 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 
 func (r *HandlerRouter) OnText(c telebot.Context) error {
 	state, ok := r.states.Get(c.Chat().ID)
+	r.log.Info("Get state", state)
 	if ok != nil {
+		r.log.Error("Error get state", ok)
 		return c.Send("Пожалуйста, начните с /start")
 	}
 
 	id, err := parseID(state)
 	if err != nil {
+		r.log.Error("Error parse id", err)
 		log.Printf("Can't parse id or another state: %w", err)
 	}
 
@@ -116,6 +125,8 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 }
 
 func (r *HandlerRouter) OnStart(c telebot.Context) error {
+	const op = "HandlerRouter.OnStart"
+
 	u, err := r.userHandler.service.FindByID(c.Chat().ID)
 	if err != nil || u.Status != "REGISTERED" {
 		return c.Send("Привет! Давай зарегистрируемся?", RegisterOnlyMenu())
@@ -123,18 +134,26 @@ func (r *HandlerRouter) OnStart(c telebot.Context) error {
 	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username), MainMenu())
 }
 
-func (r *HandlerRouter) UserData(c telebot.Context) error {
+func (r *HandlerRouter) UserData(c telebot.Context, cb CallbackData) error {
+	const op = "HandlerRouter.UserData"
+
 	data := c.Callback().Data[1:]
 	if !strings.HasPrefix(data, constants.USER_DATA_PREFIX) {
 		return c.Respond()
 	}
-	userId, _ := strconv.ParseInt(data[len(constants.USER_DATA_PREFIX):], 10, 64)
+	userId, _ := strconv.ParseInt(cb.id, 10, 64)
+	r.log.Info("Get user id", slog.Int64Value(userId))
 	wishes, err := r.wishlistHandler.service.FindAllByUserId(userId)
+
 	if err != nil {
+		r.log.Error(op, sl.Err(err))
 		return c.Edit(fmt.Sprintf("Ошибка в поиске пожеланий у юзера с айди %d", userId), MainMenu())
 	}
+	r.log.Info("Get wishes", slog.AnyValue(wishes))
+
 	user, err := r.userHandler.service.FindByID(userId)
 	if err != nil {
+		r.log.Error(op, sl.Err(err))
 		return c.Edit("Почему-то не смогли найти этого пользователя в базе. Возвращаем в начало", MainMenu())
 	}
 
@@ -147,6 +166,7 @@ func (r *HandlerRouter) UserData(c telebot.Context) error {
 
 	_, err = c.Bot().Edit(c.Message(), msg.String(), r.createBackButton())
 	if err != nil {
+		r.log.Error(op, sl.Err(err))
 		return c.Respond(&telebot.CallbackResponse{
 			Text: "Ошибка отображения данных",
 		})
@@ -156,8 +176,8 @@ func (r *HandlerRouter) UserData(c telebot.Context) error {
 }
 
 func parseID(state string) (string, error) {
-	if strings.HasPrefix(state, constants.SEND_MESSAGE_ADMIN + "_") {
-		after, found := strings.CutPrefix(state, constants.SEND_MESSAGE_ADMIN + "_")
+	if strings.HasPrefix(state, constants.SEND_MESSAGE_ADMIN+"_") {
+		after, found := strings.CutPrefix(state, constants.SEND_MESSAGE_ADMIN+"_")
 		if !found {
 			return "", errors.New("Error with state")
 		}

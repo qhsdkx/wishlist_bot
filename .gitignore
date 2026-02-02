@@ -17,3 +17,8 @@ __debug_bin.exe
 .idea/
 *.swp
 *.swo
+
+# Ignore config directory
+./config
+./config/*
+/config/config.yaml

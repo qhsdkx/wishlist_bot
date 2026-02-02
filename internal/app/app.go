@@ -1,42 +1,74 @@
 package app
 
 import (
-	"log"
-	"wishlist-bot/pkg/database"
+	"log/slog"
+	"wishlist-bot/internal/bot"
+	"wishlist-bot/internal/config"
+	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/logger/sl"
+	"wishlist-bot/internal/scheduler"
 	"wishlist-bot/internal/user"
 	"wishlist-bot/internal/wishlist"
-	"wishlist-bot/internal/bot"
-	"wishlist-bot/internal/fsm"
-	"wishlist-bot/internal/scheduler"
+	"wishlist-bot/pkg/database"
 )
 
-func Start() {
-	db, err := database.Init()
-	if err != nil {
-		log.Printf("Error with db connection: %s", err)
-	}
-	ur := user.NewRepository(db)
-	wr := wishlist.NewRepository(db)
+type App struct {
+	cfg       *config.Config
+	log       *slog.Logger
+	bot       *bot.Bot
+	scheduler *scheduler.Scheduler
+}
 
-	us := user.NewService(ur)
+func New(cfg *config.Config, log *slog.Logger) *App {
+	return &App{
+		cfg: cfg,
+		log: log,
+	}
+}
+
+func (a *App) MustStart() {
+	db := database.MustInit(a.cfg.Database, a.log)
+
+	ur := user.NewRepository(db, a.log)
+	wr := wishlist.NewRepository(db, a.log)
+
+	us := user.NewService(ur, a.log)
 	ws := wishlist.NewService(wr)
 
 	states := fsm.NewInMemoryStateStore()
 
-	uRouter := bot.NewUserHandler(us, states)
-	wRouter := bot.NewWishlistHandler(ws, states)
-	aRouter := bot.NewAdminHandler(us, ws, states)
+	uRouter := bot.NewUserHandler(us, states, a.log)
+	wRouter := bot.NewWishlistHandler(ws, states, a.log)
+	aRouter := bot.NewAdminHandler(us, ws, states, a.log)
+	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states, a.log)
 
-	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states)
-	bot, err := bot.NewBot(mainRouter)
+	botApi, err := bot.New(mainRouter, a.cfg.Bot, a.log)
 	if err != nil {
-		log.Printf("Error with create bot: %w", err)
+		a.log.Error("Error creating botApi", sl.Err(err))
+		panic(err)
 	}
 
-	sch := scheduler.NewScheduler(bot.API(), us, ws)
-	go sch.StartScheduler()
+	a.bot = botApi
 
-	bot.RegisterHandlers()
-	bot.Start()
+	a.scheduler = scheduler.New(a.bot.API(), us, ws, a.cfg, a.log)
+
+	go a.scheduler.Start()
+
+	a.bot.RegisterHandlers()
+
+	go a.bot.Start()
+
 	select {}
+}
+
+func (a *App) Stop() {
+	const op = "app.Stop"
+	a.log.Info(op)
+
+	if a.scheduler != nil {
+		a.scheduler.Stop()
+	}
+	if a.bot != nil {
+		a.bot.Stop()
+	}
 }
