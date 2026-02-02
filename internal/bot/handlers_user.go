@@ -37,7 +37,7 @@ func (h *UserHandler) ShowProfile(c telebot.Context) error {
 		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
 			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 		msg.WriteString("Кнопками ниже вы можете обновить данные")
-		return c.Send(msg.String(), EditMenu())
+		return c.Edit(msg.String(), EditMenu())
 	}
 
 	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", u.Name, u.Username))
