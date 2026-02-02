@@ -116,6 +116,28 @@ func (r *Repository) FindAllByUserId(ID int64) ([]Wish, error) {
 	return wishes, nil
 }
 
+func (r *Repository) FindCountByUserID(userID int64) (int, error) {
+	const op = "WishlistRepository.FindCountByUserID"
+
+	query := `SELECT COUNT(*) FROM wishes WHERE user_id = $1`
+
+	var count int
+	rows, err := r.db.Query(query, userID)
+	if err != nil {
+		r.log.Error(op, sl.Err(err))
+		return 0, fmt.Errorf("error at %s", err)
+	}
+	defer rows.Close()
+	for rows.Next() {
+		err = rows.Scan(&count)
+		if err != nil {
+			r.log.Error(op, sl.Err(err))
+			return 0, fmt.Errorf("error at %v", err)
+		}
+	}
+	return count, nil
+}
+
 func (r *Repository) Delete(s string, userID int64) error {
 	const op = "WishlistRepository.Delete"
 
@@ -143,7 +165,7 @@ func (r *Repository) DeleteAll(userID int64) error {
 func (r *Repository) DeleteByID(ID int64) error {
 	const op = "WishlistRepository.DeleteByID"
 
-	query := `DELETE * FROM wishes where id = $1`
+	query := `DELETE FROM wishes where id = $1`
 	_, err := r.db.Exec(query, &ID)
 	if err != nil {
 		r.log.Error(op, sl.Err(err))

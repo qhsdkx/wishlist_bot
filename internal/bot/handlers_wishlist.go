@@ -49,8 +49,24 @@ func (h *WishlistHandler) Register(c telebot.Context) error {
 func (h *WishlistHandler) Awaiting(c telebot.Context) error {
 	const op = "WishlistHandler.Awaiting"
 
+	count, err := h.service.FindCountByUserID(c.Chat().ID)
+	if err != nil {
+		h.log.Error(op, sl.Err(err))
+		return c.Send("Ошибка при сохранении. Напишите админу @qhsdkx")
+	}
+
+	if count > 15 {
+		h.log.Error(op, slog.String("count", strconv.Itoa(count)+" больше 15"))
+		return c.Send("Временно доступно не больше 15 пожеланий. Удалите старые и добавьте новые, если хотите их изменить")
+	}
+
 	text := c.Text()
 	splits := strings.Split(text, ",")
+	if len(splits)-count == 0 {
+		h.log.Error(op, slog.String("count", strconv.Itoa(count)+" больше 15"))
+		return c.Send("Временно доступно не больше 15 пожеланий. Удалите старые и добавьте новые, если хотите их изменить")
+	}
+
 	wishes := make([]wishlist.Wish, 0, len(splits))
 	for _, s := range splits {
 		wishes = append(wishes, wishlist.Wish{
@@ -59,9 +75,9 @@ func (h *WishlistHandler) Awaiting(c telebot.Context) error {
 		})
 	}
 
-	if err := h.service.SaveAll(wishes); err != nil {
-		h.log.Error(op, sl.Err(err))
-		return c.Send(fmt.Sprintf("Ошибка сохранения: %+v", err), MainMenu())
+	if errSave := h.service.SaveAll(wishes); errSave != nil {
+		h.log.Error(op, sl.Err(errSave))
+		return c.Send(fmt.Sprintf("Ошибка сохранения: %+v", errSave), MainMenu())
 	}
 
 	h.states.Delete(c.Chat().ID)
@@ -69,22 +85,30 @@ func (h *WishlistHandler) Awaiting(c telebot.Context) error {
 }
 
 func (h *WishlistHandler) Delete(c telebot.Context) error {
-	h.states.Set(c.Chat().ID, constants.DELETE_WISH)
-	return c.Edit("Введите пожелание, которое хотите удалить")
+	const op = "WishlistHandler.Delete"
+
+	wishes, err := h.service.FindAllByUserId(c.Chat().ID)
+	if err != nil {
+		h.log.Error(op, sl.Err(err))
+		return err
+	}
+	markup := h.createWishlistMarkup(wishes)
+	return c.Edit("Выберите пожелание, которое хотите удалить", markup)
 }
 
-func (h *WishlistHandler) AwaitingDelete(c telebot.Context) error {
+func (h *WishlistHandler) AwaitingDelete(c telebot.Context, cb CallbackData) error {
 	const op = "WishlistHandler.AwaitingDelete"
-
-	text := c.Text()
-	h.states.Delete(c.Chat().ID)
-
-	if err := h.service.Delete(text, c.Chat().ID); err != nil {
+	wishID, err := strconv.ParseInt(cb.Id(), 10, 64)
+	if err != nil {
 		h.log.Error(op, sl.Err(err))
-		return c.Send("Ошибка при удалении. Проверьте название", WishlistMenu())
 	}
 
-	return c.Send("Пожелание успешно удалено", WishlistMenu())
+	if err := h.service.DeleteByID(wishID); err != nil {
+		h.log.Error(op, sl.Err(err))
+		return c.Send("Ошибка при удалении", WishlistMenu())
+	}
+
+	return c.Edit("Пожелание успешно удалено", WishlistMenu())
 }
 
 func (h *WishlistHandler) HandleDeleteWish(c telebot.Context) error {
@@ -104,4 +128,24 @@ func (h *WishlistHandler) HandleDeleteWish(c telebot.Context) error {
 	}
 
 	return c.Respond(&telebot.CallbackResponse{Text: "Удалено ✅", ShowAlert: false})
+}
+
+func (h *WishlistHandler) createWishlistMarkup(wishes []wishlist.Wish) *telebot.ReplyMarkup {
+	markup := &telebot.ReplyMarkup{}
+	rows := make([]telebot.Row, 0, len(wishes))
+
+	for _, wish := range wishes {
+		btn := markup.Data(
+			fmt.Sprintf(wish.WishText),
+			NewCallbackData(
+				constants.DELETE_CHOOSED_WISH,
+				"",
+				strconv.FormatInt(wish.ID, 10),
+				"",
+			).string())
+		rows = append(rows, markup.Row(btn))
+	}
+
+	markup.Inline(rows...)
+	return markup
 }

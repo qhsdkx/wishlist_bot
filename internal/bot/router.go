@@ -76,6 +76,8 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 		return r.wishlistHandler.Register(c)
 	case constants.DELETE_WISH:
 		return r.wishlistHandler.Delete(c)
+	case constants.DELETE_CHOOSED_WISH:
+		return r.wishlistHandler.AwaitingDelete(c, callbackData)
 	default:
 		return r.Error(c)
 	}
@@ -113,8 +115,6 @@ func (r *HandlerRouter) OnText(c telebot.Context) error {
 
 	case constants.AWAITING_WISHES:
 		return r.wishlistHandler.Awaiting(c)
-	case constants.DELETE_WISH:
-		return r.wishlistHandler.AwaitingDelete(c)
 	case constants.SEND_MESSAGE_ADMIN:
 		return r.adminHandler.SendMessage(c, id)
 
