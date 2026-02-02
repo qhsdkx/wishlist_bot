@@ -3,9 +3,10 @@ package bot
 import (
 	"errors"
 	"gopkg.in/telebot.v4"
-	"log"
+	"log/slog"
 	"time"
 	"wishlist-bot/internal/config"
+	"wishlist-bot/internal/logger/sl"
 )
 
 type Bot struct {
@@ -13,7 +14,7 @@ type Bot struct {
 	router HandlerRouter
 }
 
-func New(router HandlerRouter, cfg config.BotConfig) (*Bot, error) {
+func New(router HandlerRouter, cfg config.BotConfig, log *slog.Logger) (*Bot, error) {
 	if cfg.ApiKey == "" {
 		return nil, errors.New("token is empty")
 	}
@@ -24,7 +25,7 @@ func New(router HandlerRouter, cfg config.BotConfig) (*Bot, error) {
 	}
 	tgBot, err := telebot.NewBot(pref)
 	if err != nil {
-		log.Fatal(err)
+		log.Error("Error creating bot", sl.Err(err))
 		return nil, err
 	}
 

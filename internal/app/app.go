@@ -29,20 +29,20 @@ func New(cfg *config.Config, log *slog.Logger) *App {
 func (a *App) MustStart() {
 	db := database.MustInit(a.cfg.Database)
 
-	ur := user.NewRepository(db)
-	wr := wishlist.NewRepository(db)
+	ur := user.NewRepository(db, a.log)
+	wr := wishlist.NewRepository(db, a.log)
 
-	us := user.NewService(ur)
+	us := user.NewService(ur, a.log)
 	ws := wishlist.NewService(wr)
 
 	states := fsm.NewInMemoryStateStore()
 
-	uRouter := bot.NewUserHandler(us, states)
-	wRouter := bot.NewWishlistHandler(ws, states)
-	aRouter := bot.NewAdminHandler(us, ws, states)
-	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states)
+	uRouter := bot.NewUserHandler(us, states, a.log)
+	wRouter := bot.NewWishlistHandler(ws, states, a.log)
+	aRouter := bot.NewAdminHandler(us, ws, states, a.log)
+	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states, a.log)
 
-	botApi, err := bot.New(mainRouter, a.cfg.Bot)
+	botApi, err := bot.New(mainRouter, a.cfg.Bot, a.log)
 	if err != nil {
 		a.log.Error("Error creating botApi", sl.Err(err))
 		panic(err)
@@ -50,7 +50,7 @@ func (a *App) MustStart() {
 
 	a.bot = botApi
 
-	a.scheduler = scheduler.New(a.bot.API(), us, ws, a.cfg)
+	a.scheduler = scheduler.New(a.bot.API(), us, ws, a.cfg, a.log)
 
 	go a.scheduler.Start()
 

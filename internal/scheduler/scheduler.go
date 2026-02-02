@@ -3,6 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -22,9 +23,10 @@ type Scheduler struct {
 	ws  wishlist.Service
 	s   *gocron.Scheduler
 	cfg *config.Config
+	log *slog.Logger
 }
 
-func New(bot *telebot.Bot, us user.Service, ws wishlist.Service, cfg *config.Config) *Scheduler {
+func New(bot *telebot.Bot, us user.Service, ws wishlist.Service, cfg *config.Config, log *slog.Logger) *Scheduler {
 	location, _ := time.LoadLocation(constants.LOCATION)
 	return &Scheduler{
 		bot: bot,
@@ -32,38 +34,48 @@ func New(bot *telebot.Bot, us user.Service, ws wishlist.Service, cfg *config.Con
 		ws:  ws,
 		s:   gocron.NewScheduler(location),
 		cfg: cfg,
+		log: log,
 	}
 }
 
 func (sch *Scheduler) Start() {
-	scheduleTime := os.Getenv(sch.cfg.Scheduler.NotifTimeDaily)
+	const op = "Scheduler.Start"
+
+	scheduleTime := sch.cfg.Scheduler.NotifTimeDaily
 	if scheduleTime == "" {
 		scheduleTime = "10:00"
 	}
 
-	scheduleTimeWeekly := os.Getenv(sch.cfg.Scheduler.NotifTimeWeekly)
+	scheduleTimeWeekly := sch.cfg.Scheduler.NotifTimeWeekly
 	if scheduleTimeWeekly == "" {
 		scheduleTimeWeekly = "9:55"
 	}
 
 	_, err := sch.s.Every(1).Days().At(scheduleTime).Do(sch.sendDailyNotifications)
 	if err != nil {
-		log.Fatalf("Error scheduling task: %v", err)
+		sch.log.Error(op, err.Error())
 	}
 
 	_, err = sch.s.Every(1).Days().At(scheduleTimeWeekly).Do(sch.sendWeeklyNotifications)
 	if err != nil {
-		log.Fatalf("Error scheduling task: %v", err)
+		sch.log.Error(op, err.Error())
 	}
 
 	_, err = sch.s.Every(1).Days().At("23:50").Do(sch.deleteWishes)
+
+	if err != nil {
+		sch.log.Error(op, err.Error())
+	}
 
 	sch.s.StartAsync()
 }
 
 func (sch *Scheduler) sendDailyNotifications() {
+	const op = "Scheduler.SendDailyNotifications"
+
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
+		sch.log.Error(op, err.Error())
 		_, sendErr := sch.bot.Send(telebot.ChatID(sch.cfg.AdminId), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
@@ -77,6 +89,7 @@ func (sch *Scheduler) sendDailyNotifications() {
 		for _, other := range others {
 			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
+				sch.log.Error(op, err.Error())
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 		}
@@ -84,9 +97,12 @@ func (sch *Scheduler) sendDailyNotifications() {
 }
 
 func (sch *Scheduler) sendWeeklyNotifications() {
+	const op = "Scheduler.SendWeeklyNotifications"
+
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
+		sch.log.Error(op, err.Error())
 		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
@@ -100,6 +116,7 @@ func (sch *Scheduler) sendWeeklyNotifications() {
 		for _, other := range others {
 			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
+				sch.log.Error(op, err.Error())
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 
@@ -108,9 +125,12 @@ func (sch *Scheduler) sendWeeklyNotifications() {
 }
 
 func (sch *Scheduler) deleteWishes() {
+	const op = "Scheduler.DeleteWishes"
+
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
+		sch.log.Error(op, err.Error())
 		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)

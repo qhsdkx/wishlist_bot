@@ -2,11 +2,13 @@ package bot
 
 import (
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 	constants "wishlist-bot/internal/constant"
 	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/logger/sl"
 	"wishlist-bot/internal/user"
 
 	"gopkg.in/telebot.v4"
@@ -15,15 +17,18 @@ import (
 type UserHandler struct {
 	service user.Service
 	states  fsm.StateStore
+	log     *slog.Logger
 }
 
-func NewUserHandler(service user.Service, states fsm.StateStore) *UserHandler {
-	return &UserHandler{service: service, states: states}
+func NewUserHandler(service user.Service, states fsm.StateStore, log *slog.Logger) *UserHandler {
+	return &UserHandler{service: service, states: states, log: log}
 }
 
 func (h *UserHandler) ShowProfile(c telebot.Context) error {
+	const op = "UserHandler.ShowProfile"
 	user, err := h.service.FindByID(c.Chat().ID)
 	if err != nil {
+		h.log.Info(op, err, "user", user)
 		return c.Edit(fmt.Sprintf("Невозможно найти юзера по ID %d", c.Chat().ID), MainMenu())
 	}
 
@@ -40,17 +45,20 @@ func (h *UserHandler) ShowProfile(c telebot.Context) error {
 }
 
 func (h *UserHandler) EditName(c telebot.Context) error {
-	h.states.Set(c.Chat().ID, "AWAITING_NEW_NAME")
+	h.states.Set(c.Chat().ID, constants.AWAITING_NEW_NAME)
 	return c.Edit("Введите новое имя")
 }
 
 func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
+	const op = "UserHandler.AwaitingNewName"
+
 	text := strings.TrimSpace(c.Text())
 	if strings.Count(text, " ") > 0 {
 		return c.Send("Введите только имя, без фамилии")
 	}
 
 	if err := h.service.UpdateName(text, c.Chat().ID); err != nil {
+		h.log.Info(op, err)
 		return c.Send("Ошибка сохранения данных", MainMenu())
 	}
 
@@ -64,12 +72,15 @@ func (h *UserHandler) EditSurname(c telebot.Context) error {
 }
 
 func (h *UserHandler) AwaitingNewSurname(c telebot.Context) error {
+	const op = "UserHandler.AwaitingNewSurname"
+
 	text := strings.TrimSpace(c.Text())
 	if strings.Count(text, " ") > 0 {
 		return c.Send("Введите только фамилию, без имени")
 	}
 
 	if err := h.service.UpdateName(text, c.Chat().ID); err != nil {
+		h.log.Info(op, err)
 		return c.Send("Ошибка сохранения данных", MainMenu())
 	}
 
@@ -83,11 +94,15 @@ func (h *UserHandler) EditBirthdate(c telebot.Context) error {
 }
 
 func (h *UserHandler) AwaitingNewBirthdate(c telebot.Context) error {
+	const op = "UserHandler.AwaitingNewBirthdate"
+
 	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
+		h.log.Info(op, err)
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
 	if errUpdate := h.service.UpdateBirthdate(&date, c.Chat().ID); errUpdate == nil {
+		h.log.Info(op, errUpdate)
 		h.states.Delete(c.Chat().ID)
 		return c.Send("Дата успешно обновлена. Можете продолжить обновление", EditMenu())
 	}
@@ -100,6 +115,8 @@ func (h *UserHandler) EditUserName(c telebot.Context) error {
 }
 
 func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
+	const op = "UserHandler.AwaitingNewUsername"
+
 	if !strings.HasPrefix(c.Text(), "@") {
 		return c.Send("Неверный формат. Никнейм начинается с \"@\". Попробуйте еще раз")
 	}
@@ -107,6 +124,7 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова.\nВведите пожалуйста ваш ник одним словом"))
 	}
 	if err := h.service.UpdateUsername(c.Text(), c.Chat().ID); err == nil {
+		h.log.Info(op, err)
 		h.states.Delete(c.Chat().ID)
 		return c.Send("Никнейм успешно обновлен. Можете продолжить обновление", EditMenu())
 	}
@@ -114,21 +132,25 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 }
 
 func (h *UserHandler) Register(c telebot.Context) error {
+	const op = "UserHandler.Register"
+
 	if registered := h.service.CheckIfRegistered(c.Chat().ID); registered != nil {
 		h.service.Save(user.User{
-			ID: c.Chat().ID, 
-			Name: c.Chat().FirstName, 
-			Surname: c.Chat().LastName, 
+			ID:       c.Chat().ID,
+			Name:     c.Chat().FirstName,
+			Surname:  c.Chat().LastName,
 			Username: "@" + c.Chat().Username,
-			Status: constants.ADDED,
+			Status:   constants.ADDED,
 		})
 		h.states.Set(c.Chat().ID, constants.AWAITING_BIRTHDATE)
 		if err := c.Edit("Пожалуйста, введите дату рождения в формате ДД.ММ.ГГГГ"); err != nil {
+			h.log.Error(op, sl.Err(err))
 			return err
 		}
 		return nil
 	}
 	if err := c.Edit("Вы уже зарегистрированный пользователь. Возвращаем в начало", MainMenu()); err != nil {
+		h.log.Error(op, sl.Err(err))
 		return err
 	}
 	return nil
@@ -140,8 +162,11 @@ func (h *UserHandler) Prev(c telebot.Context) error {
 }
 
 func (h *UserHandler) AwaitingBirthdate(c telebot.Context) error {
+	const op = "UserHandler.AwaitingBirthdate"
+
 	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
+		h.log.Info(op, err)
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
 	if errUpdated := h.service.UpdateBirthdate(&date, c.Chat().ID); errUpdated == nil {
@@ -163,12 +188,15 @@ func (h *UserHandler) AwaitingName(c telebot.Context) error {
 }
 
 func (h *UserHandler) AwaitingSurname(c telebot.Context) error {
+	const op = "UserHandler.AwaitingSurname"
+
 	if count := strings.Count(strings.TrimSpace(c.Text()), " "); count > 0 {
 		return c.Send("Вероятно, вы ввели два слова.\nВведите пожалуйста только фамилию")
 	}
 	if err := h.service.UpdateSurname(c.Text(), c.Chat().ID); err == nil {
 		errUpdate := h.service.UpdateStatus(constants.REGISTERED, c.Chat().ID)
 		if errUpdate != nil {
+			h.log.Error(op, sl.Err(err))
 			return c.Send(fmt.Sprintf("Ошибка изменения статуса у юзера с айди %d", c.Chat().ID), MainMenu())
 		}
 		h.states.Delete(c.Chat().ID)
@@ -178,7 +206,9 @@ func (h *UserHandler) AwaitingSurname(c telebot.Context) error {
 }
 
 func (h *UserHandler) DeleteMe(c telebot.Context) error {
+	const op = "UserHandler.DeleteMe"
 	if err := h.service.Delete(c.Chat().ID); err != nil {
+		h.log.Error(op, sl.Err(err))
 		err = c.Edit(fmt.Sprintf("Ошибка при удалении у юзера с айди %d", c.Chat().ID), MainMenu())
 		return err
 	}
@@ -186,13 +216,17 @@ func (h *UserHandler) DeleteMe(c telebot.Context) error {
 }
 
 func (h *UserHandler) UserList(c telebot.Context, mode string) error {
+	const op = "UserHandler.UserList"
+
 	err := h.service.CheckIfRegistered(c.Chat().ID)
 	if err != nil {
+		h.log.Error(op, sl.Err(err))
 		err = c.Edit("Вы еще не зарегистрировались, чтобы просматривать пользователей. Пожалуйста, пройдите регистрацию", MainMenu())
 		return err
 	}
 	users, pagination, err := h.service.FindAll(1, constants.USERS_PER_PAGE, mode)
 	if err != nil {
+		h.log.Error(op, sl.Err(err))
 		return c.Edit("Ошибка получения данных", MainMenu())
 	}
 
@@ -204,8 +238,11 @@ func (h *UserHandler) UserList(c telebot.Context, mode string) error {
 }
 
 func (h *UserHandler) PrevAndBack(c telebot.Context, mode, pageStr string) error {
+	const op = "UserHandler.PrevAndBack"
+
 	page, err := strconv.Atoi(pageStr)
 	if err != nil {
+		h.log.Error(op, sl.Err(err))
 		return err
 	}
 	return h.updateUserListPage(c, page, mode)
@@ -217,14 +254,18 @@ func (h *UserHandler) ChooseUser(c telebot.Context, id string) error {
 }
 
 func (h *UserHandler) SendMessage(c telebot.Context) error {
+	const op = "UserHandler.SendMessage"
+
 	state, err := h.states.Get(c.Chat().ID)
 	if err != nil {
+		h.log.Error(op, sl.Err(err))
 		c.Send("Error with sending!")
 	}
 	userId, _ := strconv.ParseInt(state[:len(constants.SEND_MESSAGE_ADMIN+"_")], 10, 64)
 	h.states.Delete(c.Chat().ID)
 	err = c.Send(telebot.ChatID(userId), c.Text())
 	if err != nil {
+		h.log.Error(op, sl.Err(err))
 		return c.Send("Ошибка ", err)
 	}
 	return c.Send("Sent successfully!")
@@ -239,10 +280,10 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 			btn := markup.Data(
 				fmt.Sprintf("%s %s (%s)", user.Name, user.Surname, user.Birthdate.Format("02.01.2006")),
 				NewCallbackData(
-					constants.SHOW_USERS,
+					constants.USER_DATA_PREFIX,
 					mode,
 					strconv.FormatInt(user.ID, 10),
-					"").string(),
+					strconv.Itoa(pagination.CurrentPage)).string(),
 			)
 			rows = append(rows, markup.Row(btn))
 		}
@@ -255,7 +296,7 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 					constants.SEND_MESSAGE_ADMIN,
 					mode,
 					strconv.FormatInt(user.ID, 10),
-					"").string(),
+					strconv.Itoa(pagination.CurrentPage)).string(),
 			)
 			rows = append(rows, markup.Row(btn))
 		}
@@ -280,7 +321,7 @@ func (h *UserHandler) createUserListMarkup(users []user.User, pagination *user.P
 					constants.BTN_PREV_PAGE,
 					mode,
 					"",
-					strconv.Itoa(pagination.CurrentPage-1)).string(),
+					strconv.Itoa(pagination.CurrentPage+1)).string(),
 			)
 			paginationRow = append(paginationRow, nextBtn)
 		}
