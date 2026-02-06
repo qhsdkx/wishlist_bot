@@ -129,7 +129,16 @@ func (r *HandlerRouter) OnStart(c telebot.Context) error {
 
 	u, err := r.userHandler.service.FindByID(c.Chat().ID)
 	if err != nil || u.Status != "REGISTERED" {
-		return c.Send("Привет! Давай зарегистрируемся?", RegisterOnlyMenu())
+		var msg strings.Builder
+
+		msg.WriteString("ВНИМАНИЕ!\n\n")
+		msg.WriteString("Нажимая кнопку 'Регистрация', вы даете согласие на обработку ваших персональных данных:\n")
+		msg.WriteString("• Имя\n")
+		msg.WriteString("• Дата рождения\n\n")
+		msg.WriteString("Данные будут использованы для создания вашей учетной записи в системе.")
+		msg.WriteString("Для дальнейшего использования нужно зарегистрироваться")
+
+		return c.Send(msg.String(), RegisterOnlyMenu())
 	}
 	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username), MainMenu())
 }

@@ -132,7 +132,7 @@ func (h *WishlistHandler) HandleDeleteWish(c telebot.Context) error {
 
 func (h *WishlistHandler) createWishlistMarkup(wishes []wishlist.Wish) *telebot.ReplyMarkup {
 	markup := &telebot.ReplyMarkup{}
-	rows := make([]telebot.Row, 0, len(wishes))
+	rows := make([]telebot.Row, 0, len(wishes)+1)
 
 	for _, wish := range wishes {
 		btn := markup.Data(
@@ -145,6 +145,9 @@ func (h *WishlistHandler) createWishlistMarkup(wishes []wishlist.Wish) *telebot.
 			).string())
 		rows = append(rows, markup.Row(btn))
 	}
+
+	btnPrev := markup.Data("⬅", NewCallbackData(constants.BTN_PREV, "", "", "").string())
+	rows = append(rows, markup.Row(btnPrev))
 
 	markup.Inline(rows...)
 	return markup
