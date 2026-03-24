@@ -12,3 +12,15 @@ type User struct {
 	Status    string    `json:"status"`
 	Birthdate time.Time `json:"birthdate"`
 }
+
+func (u *User) GetID() int64 {
+	return u.ID
+}
+
+func (u *User) GetName() string {
+	return u.Name
+}
+
+func (u *User) GetSurname() string {
+	return u.Surname
+}

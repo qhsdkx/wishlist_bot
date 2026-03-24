@@ -53,6 +53,13 @@ const (
 	USERS_PER_PAGE   = 10
 	USER_DATA_PREFIX = "user"
 	BACK_TO_LIST     = "back_to_list"
+
+	BTN_GROUPS     = "groups"
+	SHOW_GROUP     = "show_group"
+	JOIN_GROUP     = "join_group"
+	LEAVE_GROUP    = "leave_group"
+	BACK_TO_GROUPS = "back_to_groups"
+	SHOW_BD_WISHES = "show_bd_wishes"
 )
 
 const LOCATION = "Europe/Minsk"

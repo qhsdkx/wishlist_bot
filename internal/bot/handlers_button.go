@@ -10,6 +10,7 @@ func MainMenu() *telebot.ReplyMarkup {
 	menu := &telebot.ReplyMarkup{}
 	btnMe := menu.Data("Редактировать мои данные", NewCallbackData(consta.BTN_ME, "", "", "").string())
 	btnWishlist := menu.Data("Список желаний", NewCallbackData(consta.BTN_WISHLIST, "", "", "").string())
+	btnGroups := menu.Data("🎉 Группы", NewCallbackData(consta.BTN_GROUPS, "", "", "").string())
 	btnAllUsers := menu.Data("Показать всех пользователей", NewCallbackData(consta.BTN_ALL_USERS, "", "", "").string())
 	btnDeleteMe := menu.Data("Удалить меня в базе", NewCallbackData(consta.BTN_DELETE_ME, "", "", "").string())
 	btnHelp := menu.Data("Помощь", NewCallbackData(consta.BTN_HELP, "", "", "").string())
@@ -17,6 +18,7 @@ func MainMenu() *telebot.ReplyMarkup {
 	menu.Inline(
 		menu.Row(btnMe),
 		menu.Row(btnWishlist),
+		menu.Row(btnGroups),
 		menu.Row(btnAllUsers),
 		menu.Row(btnDeleteMe),
 		menu.Row(btnHelp),

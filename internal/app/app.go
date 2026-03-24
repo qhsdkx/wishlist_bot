@@ -5,6 +5,7 @@ import (
 	"wishlist-bot/internal/bot"
 	"wishlist-bot/internal/config"
 	"wishlist-bot/internal/fsm"
+	"wishlist-bot/internal/group"
 	"wishlist-bot/internal/logger/sl"
 	"wishlist-bot/internal/scheduler"
 	"wishlist-bot/internal/user"
@@ -31,16 +32,19 @@ func (a *App) MustStart() {
 
 	ur := user.NewRepository(db, a.log)
 	wr := wishlist.NewRepository(db, a.log)
+	gr := group.NewRepository(db, a.log)
 
 	us := user.NewService(ur, a.log)
 	ws := wishlist.NewService(wr)
+	gs := group.NewService(gr, ur, a.log)
 
 	states := fsm.NewInMemoryStateStore()
 
 	uRouter := bot.NewUserHandler(us, states, a.log)
 	wRouter := bot.NewWishlistHandler(ws, states, a.log)
 	aRouter := bot.NewAdminHandler(us, ws, states, a.log)
-	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, states, a.log)
+	gRouter := bot.NewGroupHandler(gs, us, wRouter, a.log)
+	mainRouter := bot.NewHandlerRouter(uRouter, wRouter, aRouter, gRouter, states, a.log)
 
 	botApi, err := bot.New(mainRouter, a.cfg.Bot, a.log)
 	if err != nil {
@@ -50,7 +54,7 @@ func (a *App) MustStart() {
 
 	a.bot = botApi
 
-	a.scheduler = scheduler.New(a.bot.API(), us, ws, a.cfg, a.log)
+	a.scheduler = scheduler.New(a.bot.API(), us, ws, gs, a.cfg, a.log)
 
 	go a.scheduler.Start()
 

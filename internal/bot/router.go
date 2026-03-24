@@ -18,22 +18,31 @@ type HandlerRouter struct {
 	userHandler     *UserHandler
 	wishlistHandler *WishlistHandler
 	adminHandler    *AdminHandler
+	groupHandler    *GroupHandler
 	states          fsm.StateStore
 	log             *slog.Logger
 }
 
-func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, states fsm.StateStore, log *slog.Logger) HandlerRouter {
+func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *AdminHandler, group *GroupHandler, states fsm.StateStore, log *slog.Logger) HandlerRouter {
 	return HandlerRouter{
 		userHandler:     user,
 		wishlistHandler: wishlist,
 		adminHandler:    admin,
+		groupHandler:    group,
 		states:          states,
 		log:             log,
 	}
 }
 
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
-	callbackData := parseCallback(c.Callback().Data[1:])
+	data := c.Callback().Data[1:]
+
+	if strings.HasPrefix(data, "jg|") {
+		groupID := strings.TrimPrefix(data, "jg|")
+		return r.groupHandler.JoinGroup(c, groupID)
+	}
+
+	callbackData := parseCallback(data)
 
 	r.log.Info("Get callback data", "callback", callbackData)
 
@@ -78,6 +87,20 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 		return r.wishlistHandler.Delete(c)
 	case constants.DELETE_CHOOSED_WISH:
 		return r.wishlistHandler.AwaitingDelete(c, callbackData)
+
+	// кнопки групп
+	case constants.BTN_GROUPS:
+		return r.groupHandler.ShowGroups(c)
+	case constants.SHOW_GROUP:
+		return r.groupHandler.ShowGroup(c, callbackData.id)
+	case constants.JOIN_GROUP:
+		return r.groupHandler.JoinGroup(c, callbackData.id)
+	case constants.LEAVE_GROUP:
+		return r.groupHandler.LeaveGroup(c, callbackData.id)
+	case constants.BACK_TO_GROUPS:
+		return r.groupHandler.ShowGroups(c)
+	case constants.SHOW_BD_WISHES:
+		return r.groupHandler.ShowBirthdayWishes(c, callbackData.id)
 	default:
 		return r.Error(c)
 	}
