@@ -16,7 +16,7 @@ func MustInit(cfg config.DatabaseConfig, log *slog.Logger) *sql.DB {
 		cfg.Host, port, cfg.User,
 		cfg.Password, cfg.Name)
 
-	log.Info("Connecting to database ", psqlInfo)
+	log.Info("Connecting to database", "dsn", psqlInfo)
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {

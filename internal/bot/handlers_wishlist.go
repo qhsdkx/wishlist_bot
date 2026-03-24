@@ -26,7 +26,7 @@ func NewWishlistHandler(service wishlist.Service, states fsm.StateStore, log *sl
 func (h *WishlistHandler) Show(c telebot.Context) error {
 	const op = "WishlistHandler.Show"
 
-	wishes, err := h.service.FindAllByUserId(c.Chat().ID)
+	wishes, err := h.service.FindAllByUserID(c.Chat().ID)
 	if err != nil {
 		h.log.Error(op, sl.Err(err))
 		return c.Edit("Ошибка при поиске ваших пожеланий", MainMenu())
@@ -87,7 +87,7 @@ func (h *WishlistHandler) Awaiting(c telebot.Context) error {
 func (h *WishlistHandler) Delete(c telebot.Context) error {
 	const op = "WishlistHandler.Delete"
 
-	wishes, err := h.service.FindAllByUserId(c.Chat().ID)
+	wishes, err := h.service.FindAllByUserID(c.Chat().ID)
 	if err != nil {
 		h.log.Error(op, sl.Err(err))
 		return err

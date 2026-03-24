@@ -28,7 +28,7 @@ func (h *UserHandler) ShowProfile(c telebot.Context) error {
 	const op = "UserHandler.ShowProfile"
 	u, err := h.service.FindByID(c.Chat().ID)
 	if err != nil {
-		h.log.Info(op, err, "user", u)
+		h.log.Info(op, "err", err, "user", u)
 		return c.Edit(fmt.Sprintf("Невозможно найти юзера по ID %d", c.Chat().ID), MainMenu())
 	}
 
@@ -58,7 +58,7 @@ func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
 	}
 
 	if err := h.service.UpdateName(text, c.Chat().ID); err != nil {
-		h.log.Info(op, err)
+		h.log.Info(op, "err", err)
 		return c.Send("Ошибка сохранения данных", MainMenu())
 	}
 
@@ -66,7 +66,7 @@ func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
 	u, errFind := h.service.FindByID(c.Chat().ID)
 	var msg strings.Builder
 	if errFind != nil {
-		h.log.Info(op, errFind)
+		h.log.Info(op, "err", errFind)
 		return c.Send("Ошибка. В начало.", MainMenu())
 	}
 	if u.Status == "REGISTERED" {
@@ -93,7 +93,7 @@ func (h *UserHandler) AwaitingNewSurname(c telebot.Context) error {
 	}
 
 	if err := h.service.UpdateSurname(text, c.Chat().ID); err != nil {
-		h.log.Info(op, err)
+		h.log.Info(op, "err", err)
 		return c.Send("Ошибка сохранения данных", MainMenu())
 	}
 
@@ -101,7 +101,7 @@ func (h *UserHandler) AwaitingNewSurname(c telebot.Context) error {
 	u, errFind := h.service.FindByID(c.Chat().ID)
 	var msg strings.Builder
 	if errFind != nil {
-		h.log.Info(op, errFind)
+		h.log.Info(op, "err", errFind)
 		return c.Send("Ошибка. В начало.", MainMenu())
 	}
 	if u.Status == "REGISTERED" {
@@ -124,16 +124,16 @@ func (h *UserHandler) AwaitingNewBirthdate(c telebot.Context) error {
 
 	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
-		h.log.Info(op, err)
+		h.log.Info(op, "err", err)
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
 	if errUpdate := h.service.UpdateBirthdate(&date, c.Chat().ID); errUpdate == nil {
-		h.log.Info(op, errUpdate)
+		h.log.Info(op, "err", errUpdate)
 		h.states.Delete(c.Chat().ID)
 		u, errFind := h.service.FindByID(c.Chat().ID)
 		var msg strings.Builder
 		if errFind != nil {
-			h.log.Info(op, errFind)
+			h.log.Info(op, "err", errFind)
 			return c.Send("Ошибка. В начало.", MainMenu())
 		}
 		if u.Status == "REGISTERED" {
@@ -162,12 +162,12 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 		return c.Send(fmt.Sprintf("Вероятно, вы ввели два слова.\nВведите пожалуйста ваш ник одним словом"))
 	}
 	if err := h.service.UpdateUsername(c.Text(), c.Chat().ID); err == nil {
-		h.log.Info(op, err)
+		h.log.Info(op, "err", err)
 		h.states.Delete(c.Chat().ID)
 		u, errFind := h.service.FindByID(c.Chat().ID)
 		var msg strings.Builder
 		if errFind != nil {
-			h.log.Info(op, err)
+			h.log.Info(op, "err", err)
 			return c.Send("Ошибка. В начало.", MainMenu())
 		}
 		if u.Status == "REGISTERED" {
@@ -216,7 +216,7 @@ func (h *UserHandler) AwaitingBirthdate(c telebot.Context) error {
 
 	date, err := time.Parse("02.01.2006", c.Text())
 	if err != nil {
-		h.log.Info(op, err)
+		h.log.Info(op, "err", err)
 		return c.Send("Неверный формат даты. Пожалуйста, используйте ДД.ММ.ГГГГ.")
 	}
 	if errUpdated := h.service.UpdateBirthdate(&date, c.Chat().ID); errUpdated == nil {

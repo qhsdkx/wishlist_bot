@@ -69,6 +69,14 @@ func (c *CallbackData) SetPage(page string) {
 
 func parseCallback(value string) CallbackData {
 	data := strings.Split(value, "|")
+	if len(data) < 4 {
+		return CallbackData{
+			action: value,
+			mode:   "",
+			id:     "",
+			page:   "",
+		}
+	}
 	return CallbackData{
 		action: data[action],
 		mode:   data[mode],

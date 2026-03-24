@@ -34,8 +34,8 @@ func (ur *Repository) Save(u *User) error {
 	return err
 }
 
-func (ur *Repository) FindById(ID int64) (User, error) {
-	const op = "UserRepository.FindById"
+func (ur *Repository) FindByID(ID int64) (User, error) {
+	const op = "UserRepository.FindByID"
 
 	query := `
 	SELECT 

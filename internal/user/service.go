@@ -20,7 +20,7 @@ func NewService(r *Repository, log *slog.Logger) Service {
 }
 
 func (s *Service) FindByID(id int64) (User, error) {
-	return s.repo.FindById(id)
+	return s.repo.FindByID(id)
 }
 
 func (us *Service) Save(user User) error {

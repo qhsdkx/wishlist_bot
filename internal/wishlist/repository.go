@@ -25,7 +25,7 @@ func (r *Repository) Save(w *Wish) error {
 	const op = "WishlistRepository.Save"
 
 	query := `INSERT INTO wishes (wish_text, user_id) VALUES ($1, $2)`
-	err := r.db.QueryRow(query, &w.WishText, &w.UserID)
+	err := r.db.QueryRow(query, w.WishText, w.UserID).Err()
 	if err != nil {
 		return fmt.Errorf("error at %v", err)
 	}
@@ -55,8 +55,8 @@ func (r *Repository) SaveAll(wishes []Wish) error {
 	return nil
 }
 
-func (r *Repository) FindById(ID int64) (Wish, error) {
-	const op = "WishlistRepository.FindById"
+func (r *Repository) FindByID(ID int64) (Wish, error) {
+	const op = "WishlistRepository.FindByID"
 
 	query := `
 	SELECT
@@ -85,8 +85,8 @@ func (r *Repository) FindById(ID int64) (Wish, error) {
 	return w, nil
 }
 
-func (r *Repository) FindAllByUserId(ID int64) ([]Wish, error) {
-	const op = "WishlistRepository.FindAllByUserId"
+func (r *Repository) FindAllByUserID(ID int64) ([]Wish, error) {
+	const op = "WishlistRepository.FindAllByUserID"
 
 	var wishes []Wish
 	query := `
@@ -142,7 +142,7 @@ func (r *Repository) Delete(s string, userID int64) error {
 	const op = "WishlistRepository.Delete"
 
 	query := `DELETE FROM wishes WHERE wish_text LIKE $1 AND user_id = $2`
-	_, err := r.db.Exec(query, &s, &userID)
+	_, err := r.db.Exec(query, s, userID)
 	if err != nil {
 		r.log.Error(op, sl.Err(err))
 		return fmt.Errorf("error at %s", err)
@@ -153,8 +153,8 @@ func (r *Repository) Delete(s string, userID int64) error {
 func (r *Repository) DeleteAll(userID int64) error {
 	const op = "WishlistRepository.DeleteAll"
 
-	query := `DELETE * FROM wishes WHERE user_id = $2`
-	_, err := r.db.Exec(query, &userID)
+	query := `DELETE FROM wishes WHERE user_id = $1`
+	_, err := r.db.Exec(query, userID)
 	if err != nil {
 		r.log.Error(op, sl.Err(err))
 		return errors.New("something went wrong with SQL")
@@ -165,8 +165,8 @@ func (r *Repository) DeleteAll(userID int64) error {
 func (r *Repository) DeleteByID(ID int64) error {
 	const op = "WishlistRepository.DeleteByID"
 
-	query := `DELETE FROM wishes where id = $1`
-	_, err := r.db.Exec(query, &ID)
+	query := `DELETE FROM wishes WHERE id = $1`
+	_, err := r.db.Exec(query, ID)
 	if err != nil {
 		r.log.Error(op, sl.Err(err))
 		return errors.New("something went wrong with SQL")

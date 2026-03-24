@@ -10,6 +10,7 @@ import (
 	"time"
 	"wishlist-bot/internal/config"
 	constants "wishlist-bot/internal/constant"
+	"wishlist-bot/internal/logger/sl"
 	"wishlist-bot/internal/user"
 	"wishlist-bot/internal/wishlist"
 
@@ -53,18 +54,18 @@ func (sch *Scheduler) Start() {
 
 	_, err := sch.s.Every(1).Days().At(scheduleTime).Do(sch.sendDailyNotifications)
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 	}
 
 	_, err = sch.s.Every(1).Days().At(scheduleTimeWeekly).Do(sch.sendWeeklyNotifications)
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 	}
 
 	_, err = sch.s.Every(1).Days().At("23:50").Do(sch.deleteWishes)
 
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 	}
 
 	sch.s.StartAsync()
@@ -75,7 +76,7 @@ func (sch *Scheduler) sendDailyNotifications() {
 
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 		_, sendErr := sch.bot.Send(telebot.ChatID(sch.cfg.AdminId), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
@@ -89,7 +90,7 @@ func (sch *Scheduler) sendDailyNotifications() {
 		for _, other := range others {
 			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
-				sch.log.Error(op, err.Error())
+				sch.log.Error(op, sl.Err(err))
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 		}
@@ -102,7 +103,7 @@ func (sch *Scheduler) sendWeeklyNotifications() {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)
@@ -116,7 +117,7 @@ func (sch *Scheduler) sendWeeklyNotifications() {
 		for _, other := range others {
 			_, err = sch.bot.Send(telebot.ChatID(other.ID), response)
 			if err != nil {
-				sch.log.Error(op, err.Error())
+				sch.log.Error(op, sl.Err(err))
 				log.Printf("Failed to send to user %d: %v", other.ID, err)
 			}
 
@@ -130,7 +131,7 @@ func (sch *Scheduler) deleteWishes() {
 	id, _ := strconv.Atoi(os.Getenv("ADMIN_ID"))
 	users, err := sch.us.FindAllRegistered()
 	if err != nil {
-		sch.log.Error(op, err.Error())
+		sch.log.Error(op, sl.Err(err))
 		_, sendErr := sch.bot.Send(telebot.ChatID(id), fmt.Sprintf("Ошибка в уведомлениях"))
 		if sendErr != nil {
 			log.Printf("Error sending daily notifications: %v", sendErr)

@@ -35,7 +35,7 @@ func NewHandlerRouter(user *UserHandler, wishlist *WishlistHandler, admin *Admin
 func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 	callbackData := parseCallback(c.Callback().Data[1:])
 
-	r.log.Info("Get callback data", callbackData)
+	r.log.Info("Get callback data", "callback", callbackData)
 
 	switch callbackData.action {
 	case constants.BTN_EDIT_NAME:
@@ -85,16 +85,16 @@ func (r *HandlerRouter) OnCallback(c telebot.Context) error {
 
 func (r *HandlerRouter) OnText(c telebot.Context) error {
 	state, ok := r.states.Get(c.Chat().ID)
-	r.log.Info("Get state", state)
+	r.log.Info("Get state", "state", state)
 	if ok != nil {
-		r.log.Error("Error get state", ok)
+		r.log.Error("Error get state", "err", ok)
 		return c.Send("Пожалуйста, начните с /start")
 	}
 
 	id, err := parseID(state)
 	if err != nil {
-		r.log.Error("Error parse id", err)
-		log.Printf("Can't parse id or another state: %w", err)
+		r.log.Error("Error parse id", sl.Err(err))
+		log.Printf("Can't parse id or another state: %v", err)
 	}
 
 	switch state {
@@ -151,14 +151,14 @@ func (r *HandlerRouter) UserData(c telebot.Context, cb CallbackData) error {
 		return c.Respond()
 	}
 	userId, _ := strconv.ParseInt(cb.id, 10, 64)
-	r.log.Info("Get user id", slog.Int64Value(userId))
-	wishes, err := r.wishlistHandler.service.FindAllByUserId(userId)
+	r.log.Info("Get user id", "user_id", userId)
+	wishes, err := r.wishlistHandler.service.FindAllByUserID(userId)
 
 	if err != nil {
 		r.log.Error(op, sl.Err(err))
 		return c.Edit(fmt.Sprintf("Ошибка в поиске пожеланий у юзера с айди %d", userId), MainMenu())
 	}
-	r.log.Info("Get wishes", slog.AnyValue(wishes))
+	r.log.Info("Get wishes", "wishes", wishes)
 
 	user, err := r.userHandler.service.FindByID(userId)
 	if err != nil {

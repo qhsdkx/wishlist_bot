@@ -16,8 +16,8 @@ func (w *Service) SaveAll(wishes []Wish) error {
 	return w.repo.SaveAll(wishes)
 }
 
-func (w *Service) FindAllByUserId(userId int64) ([]Wish, error) {
-	return w.repo.FindAllByUserId(userId)
+func (w *Service) FindAllByUserID(userID int64) ([]Wish, error) {
+	return w.repo.FindAllByUserID(userID)
 }
 
 func (w *Service) FindCountByUserID(userID int64) (int, error) {
