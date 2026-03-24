@@ -107,6 +107,8 @@ func (ur *Repository) FindAll(page, perPage int, mode string) ([]User, error) {
 	const op = "UserRepository.FindAll"
 
 	var users []User
+	var rows *sql.Rows
+	var err error
 
 	query := `SELECT 
     	u.id as id,
@@ -119,31 +121,28 @@ func (ur *Repository) FindAll(page, perPage int, mode string) ([]User, error) {
         WHERE CASE WHEN ($1 != 'MIS') THEN u.status = $1 ELSE TRUE END
         ORDER BY name 
         LIMIT $2 OFFSET $3`
-	var rows *sql.Rows
-	var err error
-	if mode == constants.SHOW_USERS {
+
+	switch mode {
+	case constants.SHOW_USERS:
 		rows, err = ur.db.Query(query, constants.REGISTERED, page, perPage)
-		if err != nil {
-			ur.log.Error(op, sl.Err(err))
-			return nil, fmt.Errorf("error at %s", err)
-		}
-	}
-	if mode == constants.SEND_MESSAGE_ADMIN {
+	case constants.SEND_MESSAGE_ADMIN:
 		rows, err = ur.db.Query(query, "MIS", page, perPage)
-		if err != nil {
-			ur.log.Error(op, sl.Err(err))
-			return nil, fmt.Errorf("error at %s", err)
-		}
+	default:
+		rows, err = ur.db.Query(query, constants.REGISTERED, page, perPage)
 	}
 
+	if err != nil {
+		ur.log.Error(op, sl.Err(err))
+		return nil, fmt.Errorf("error at %s", err)
+	}
 	defer rows.Close()
 
 	for rows.Next() {
 		var u User
-		errIn := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
-		if errIn != nil {
-			ur.log.Error(op, sl.Err(err))
-			return nil, fmt.Errorf("error at %s", errIn)
+		errScan := rows.Scan(&u.ID, &u.Name, &u.Surname, &u.Birthdate, &u.Username, &u.Status)
+		if errScan != nil {
+			ur.log.Error(op, sl.Err(errScan))
+			return nil, fmt.Errorf("error at %s", errScan)
 		}
 		users = append(users, u)
 	}

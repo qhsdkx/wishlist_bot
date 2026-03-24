@@ -8,7 +8,7 @@ type User struct {
 	ID        int64     `json:"id"`
 	Name      string    `json:"name"`
 	Surname   string    `json:"surname"`
-	Username  string    `json:"username"`
+	Username  *string   `json:"username"`
 	Status    string    `json:"status"`
 	Birthdate time.Time `json:"birthdate"`
 }
@@ -23,4 +23,11 @@ func (u *User) GetName() string {
 
 func (u *User) GetSurname() string {
 	return u.Surname
+}
+
+func (u *User) GetUsername() string {
+	if u.Username == nil {
+		return ""
+	}
+	return *u.Username
 }

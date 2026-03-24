@@ -197,7 +197,7 @@ func makeResponse(users []user.User) string {
 	now := time.Now().AddDate(0, 0, 1)
 	response.WriteString(fmt.Sprintf("Доброе утро!\nЗавтра (%s) день рождения у:\n\n", now.Format("02.01.2006")))
 	for _, u := range users {
-		response.WriteString(fmt.Sprintf("(%s) %s %s\n\n", u.Username, u.Surname, u.Name))
+		response.WriteString(fmt.Sprintf("(%s) %s %s\n\n", u.GetUsername(), u.Surname, u.Name))
 	}
 	return response.String()
 }
@@ -206,7 +206,7 @@ func makeWeeklyResponse(users []user.User) string {
 	var response strings.Builder
 	response.WriteString("Доброе утро!\nЧерез неделю будет день рождения у:\n\n")
 	for _, u := range users {
-		response.WriteString(fmt.Sprintf("(%s) %s %s\nДень рождения: %s\n\n", u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+		response.WriteString(fmt.Sprintf("(%s) %s %s\nДень рождения: %s\n\n", u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 	}
 	return response.String()
 }

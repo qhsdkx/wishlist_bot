@@ -110,7 +110,7 @@ func (h AdminHandler) ShowUnregistered(c telebot.Context) error {
 	var builder strings.Builder
 	builder.WriteString(fmt.Sprintf("Юзеры, которые не прошли полную регистрацию: \n\n"))
 	for _, user := range users {
-		builder.WriteString(fmt.Sprintf("- (%s) %s %s %s\n", user.Username, user.Name, user.Surname, user.Birthdate.Format("02.01.2006")))
+		builder.WriteString(fmt.Sprintf("- (%s) %s %s %s\n", user.GetUsername(), user.Name, user.Surname, user.Birthdate.Format("02.01.2006")))
 	}
 	return c.Send(builder.String())
 }

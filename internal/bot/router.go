@@ -163,7 +163,7 @@ func (r *HandlerRouter) OnStart(c telebot.Context) error {
 
 		return c.Send(msg.String(), RegisterOnlyMenu())
 	}
-	return c.Send(fmt.Sprintf("С возвращением, %s!", u.Username), MainMenu())
+	return c.Send(fmt.Sprintf("С возвращением, %s!", u.GetUsername()), MainMenu())
 }
 
 func (r *HandlerRouter) UserData(c telebot.Context, cb CallbackData) error {

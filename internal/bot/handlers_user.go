@@ -35,12 +35,12 @@ func (h *UserHandler) ShowProfile(c telebot.Context) error {
 	var msg strings.Builder
 	if u.Status == "REGISTERED" {
 		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+			u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 		msg.WriteString("Кнопками ниже вы можете обновить данные")
 		return c.Edit(msg.String(), EditMenu())
 	}
 
-	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", u.Name, u.Username))
+	msg.WriteString(fmt.Sprintf("Вы не прошли полную регистрацию.\nИмя: %s\nНикнейм: %s", u.Name, u.GetUsername()))
 	return c.Edit(msg.String(), MainMenu())
 }
 
@@ -72,7 +72,7 @@ func (h *UserHandler) AwaitingNewName(c telebot.Context) error {
 	if u.Status == "REGISTERED" {
 		msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
 		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+			u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 		msg.WriteString("Кнопками ниже вы можете обновить данные")
 		return c.Send(msg.String(), EditMenu())
 	}
@@ -107,7 +107,7 @@ func (h *UserHandler) AwaitingNewSurname(c telebot.Context) error {
 	if u.Status == "REGISTERED" {
 		msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
 		msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-			u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+			u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 		msg.WriteString("Кнопками ниже вы можете обновить данные")
 		return c.Send(msg.String(), EditMenu())
 	}
@@ -139,7 +139,7 @@ func (h *UserHandler) AwaitingNewBirthdate(c telebot.Context) error {
 		if u.Status == "REGISTERED" {
 			msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
 			msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-				u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+				u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 			msg.WriteString("Кнопками ниже вы можете обновить данные")
 			return c.Send(msg.String(), EditMenu())
 		}
@@ -173,7 +173,7 @@ func (h *UserHandler) AwaitingNewUsername(c telebot.Context) error {
 		if u.Status == "REGISTERED" {
 			msg.WriteString("ДАННЫЕ БЫЛИ ОБНОВЛЕНЫ\n\n")
 			msg.WriteString(fmt.Sprintf("Ваши данные:\n\nНик: %s\n%s %s\nДата рождения: %s\n\n",
-				u.Username, u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
+				u.GetUsername(), u.Surname, u.Name, u.Birthdate.Format("02.01.2006")))
 			msg.WriteString("Кнопками ниже вы можете обновить данные")
 			return c.Send(msg.String(), EditMenu())
 		}
@@ -185,11 +185,12 @@ func (h *UserHandler) Register(c telebot.Context) error {
 	const op = "UserHandler.Register"
 
 	if registered := h.service.CheckIfRegistered(c.Chat().ID); registered != nil {
+		username := "@" + c.Chat().Username
 		h.service.Save(user.User{
 			ID:       c.Chat().ID,
 			Name:     c.Chat().FirstName,
 			Surname:  c.Chat().LastName,
-			Username: "@" + c.Chat().Username,
+			Username: &username,
 			Status:   constants.ADDED,
 		})
 		h.states.Set(c.Chat().ID, constants.AWAITING_BIRTHDATE)
